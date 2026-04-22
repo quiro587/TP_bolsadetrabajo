@@ -1,32 +1,35 @@
+// User.java
+
 package com.tuempresa.proyecto.entity;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 @Entity
-@Table(name = "users")
+@Table(name = "personal")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
+    @Column(name = "usuario")
+    private String usuario;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(name = "password_hash")
+    private String passwordHash;
 
-    private String role;
+    @Column(name = "rol")
+    private String rol;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @Column(name = "nombre_completo")
+    private String nombreCompleto;
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    @Column(name = "activo")
+    private Boolean activo;
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    @Column(name = "ultimo_acceso")
+    private String ultimoAcceso;
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    // Getters and Setters
+
 }
