@@ -2,7 +2,7 @@
 
 Este proyecto constituye el **Trabajo Final** para la **Tecnicatura Universitaria en Programación (TUP)** de la **Facultad Regional Concepción del Uruguay - Universidad Tecnológica Nacional (FRCU UTN)**. 
 
-Se trata de un sistema integral diseñado para la gestión de la Oficina de Empleo d<dela Municioalidad de la ciudad de San José, permitiendo administrar postulantes, empresas, vacantes y el seguimiento de capacitaciones profesionales.
+Se trata de un sistema integral diseñado para la gestión de la Oficina de Empleo de la Municipalidad de la ciudad de San José, permitiendo administrar postulantes, empresas, vacantes y el seguimiento de capacitaciones profesionales.
 
 ## 👥 Integrantes - Grupo
 * **Alvarez, Fabricio**
