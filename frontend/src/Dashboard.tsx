@@ -190,6 +190,17 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
     fetchCandidates(search, selectedRubroId, page);
   }, [search, selectedRubroId, page]);
 
+  useEffect(() => {
+    if (showRubroModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showRubroModal]);
+
   const handleDelete = async (id: number, name: string) => {
     if (!window.confirm(`¿Estás seguro de que deseas dar de baja al postulante ${name}?`)) {
       return;
@@ -284,7 +295,8 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
   };
 
   return (
-    <div className="fade-in" style={{ padding: '40px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
+    <>
+      <div className="fade-in" style={{ padding: '40px', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
       {/* Search and Action Bar (Mockup Style) */}
       <div style={{
         display: 'flex',
@@ -736,6 +748,7 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
           </>
         )}
       </div>
+    </div>
 
       {/* Sleek Admin Rubros Modal */}
       {showRubroModal && (
@@ -987,6 +1000,6 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
