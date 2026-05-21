@@ -16,6 +16,7 @@ interface Candidate {
   estadoLaboral: string;
   fechaRegistro: string;
   rubros?: Rubro[];
+  telefonoPrimario?: string;
 }
 
 interface DashboardProps {
@@ -146,6 +147,30 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
       alert('Postulante dado de baja con éxito.');
     } catch (err: any) {
       alert(err.message || 'Error al eliminar postulante.');
+    }
+  };
+
+  const toggleCandidateStatus = async (id: number, currentStatus: string) => {
+    const nextStatus = currentStatus === 'EMPLEADO' ? 'EN_BUSQUEDA_ACTIVA' : 'EMPLEADO';
+    try {
+      const response = await fetch(`http://localhost:8080/api/ciudadanos/${id}/estado`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ estadoLaboral: nextStatus })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Error al actualizar el estado.');
+      }
+
+      // Actualizar el estado localmente
+      setCandidates(prev => prev.map(c => c.id === id ? { ...c, estadoLaboral: nextStatus } : c));
+    } catch (err: any) {
+      alert(err.message || 'Error de conexión al actualizar el estado.');
     }
   };
 
@@ -342,8 +367,9 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                   borderBottom: '1px solid hsl(var(--border))'
                 }}>
                   <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Postulante</th>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Estado</th>
+                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Rubro</th>
                   <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Fecha</th>
+                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Estado</th>
                   <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>CV</th>
                   <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'right' }}>Acciones</th>
                 </tr>
@@ -359,7 +385,7 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    {/* User Profile column (Mockup avatar user icon) */}
+                    {/* Postulante Column */}
                     <td style={{ padding: '20px 24px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div style={{
@@ -382,41 +408,73 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                           <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
                             {candidate.email || 'correo@sin-email.com'}
                           </div>
-                          {candidate.rubros && candidate.rubros.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                              {candidate.rubros.map((rubro) => (
-                                <span
-                                  key={rubro.id}
-                                  style={{
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    backgroundColor: 'hsl(var(--primary) / 0.08)',
-                                    color: 'hsl(var(--primary))',
-                                    padding: '2px 8px',
-                                    borderRadius: '4px',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.2px'
-                                  }}
-                                >
-                                  {rubro.nombre}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                            <span style={{ fontWeight: 500 }}>Tel:</span> {candidate.telefonoPrimario || 'Sin teléfono'}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Estado Badge column */}
+                    {/* Rubro Column */}
                     <td style={{ padding: '20px 24px' }}>
-                      <span className={`badge ${getBadgeClass(candidate.estadoLaboral)}`}>
-                        {formatStatusText(candidate.estadoLaboral)}
-                      </span>
+                      {candidate.rubros && candidate.rubros.length > 0 ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {candidate.rubros.map((rubro) => (
+                            <span
+                              key={rubro.id}
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                backgroundColor: 'hsl(var(--primary) / 0.08)',
+                                color: 'hsl(var(--primary))',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.2px'
+                              }}
+                            >
+                              {rubro.nombre}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>Sin rubro</span>
+                      )}
                     </td>
 
-                    {/* Fecha column */}
+                    {/* Fecha Column */}
                     <td style={{ padding: '20px 24px', color: 'hsl(var(--text-muted))', fontSize: '14px' }}>
                       {formatDate(candidate.fechaRegistro)}
+                    </td>
+
+                    {/* Estado Badge column (Clickable & Interactive) */}
+                    <td style={{ padding: '20px 24px' }}>
+                      <button
+                        onClick={() => toggleCandidateStatus(candidate.id, candidate.estadoLaboral)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          display: 'inline-flex',
+                          outline: 'none',
+                          transition: 'transform 0.2s ease, opacity 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                          e.currentTarget.style.opacity = '0.9';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.opacity = '1';
+                        }}
+                        title="Haga clic para cambiar el estado laboral"
+                      >
+                        <span className={`badge ${getBadgeClass(candidate.estadoLaboral)}`}>
+                          {formatStatusText(candidate.estadoLaboral)}
+                        </span>
+                      </button>
                     </td>
 
                     {/* Ver CV column (Bordered Black Style) */}

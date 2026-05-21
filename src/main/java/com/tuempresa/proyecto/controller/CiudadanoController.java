@@ -50,4 +50,24 @@ public class CiudadanoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<?> actualizarEstado(@PathVariable Integer id, @RequestBody java.util.Map<String, String> body) {
+        try {
+            String nuevoEstado = body.get("estadoLaboral");
+            if (nuevoEstado == null) {
+                return ResponseEntity.badRequest().body("El estado laboral es requerido.");
+            }
+            java.util.Optional<Ciudadano> opt = ciudadanoService.obtenerPorId(id);
+            if (opt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            Ciudadano c = opt.get();
+            c.setEstadoLaboral(nuevoEstado.toUpperCase());
+            Ciudadano guardado = ciudadanoService.guardarCiudadano(c);
+            return ResponseEntity.ok(guardado);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

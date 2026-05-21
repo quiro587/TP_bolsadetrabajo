@@ -8,7 +8,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     // Cambiamos el nombre de la variable a 'username'
     // Pero mantenemos @Column(name = "usuario") para que en MySQL busque la columna 'usuario'
@@ -32,8 +32,8 @@ public class User {
     private String ultimoAcceso;
 
     // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
