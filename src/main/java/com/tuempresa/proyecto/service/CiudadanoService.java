@@ -36,13 +36,43 @@ public class CiudadanoService {
 
     @Transactional
     public Ciudadano guardarCiudadano(Ciudadano ciudadano) throws Exception {
+        boolean isNew = ciudadano.getId() == null;
+
         // Validar unicidad de DNI y CUIL
-        if (ciudadano.getId() == null) {
-            if (ciudadanoRepository.findByDni(ciudadano.getDni()).isPresent()) {
-                throw new Exception("Ya existe un ciudadano registrado con ese DNI.");
-            }
-            if (ciudadanoRepository.findByCuil(ciudadano.getCuil()).isPresent()) {
-                throw new Exception("Ya existe un ciudadano registrado con ese CUIL.");
+        if (isNew) {
+            Optional<Ciudadano> existingDni = ciudadanoRepository.findByDni(ciudadano.getDni());
+            if (existingDni.isPresent()) {
+                Ciudadano exist = existingDni.get();
+                if (exist.getActivo()) {
+                    throw new Exception("Ya existe un ciudadano registrado con ese DNI.");
+                } else {
+                    // Validar que el CUIL de la reactivación no esté en uso por otro ciudadano ACTIVO
+                    Optional<Ciudadano> existingCuil = ciudadanoRepository.findByCuil(ciudadano.getCuil());
+                    if (existingCuil.isPresent() && !existingCuil.get().getId().equals(exist.getId())) {
+                        if (existingCuil.get().getActivo()) {
+                            throw new Exception("El CUIL ya está en uso por otro ciudadano activo.");
+                        } else {
+                            throw new Exception("Conflicto de registros inactivos (el DNI y el CUIL coinciden con distintos postulantes eliminados).");
+                        }
+                    }
+                    // Reactivar e integrar el registro inactivo existente
+                    reactivarCiudadanoInactivo(exist, ciudadano);
+                    ciudadano = exist;
+                    isNew = true; // Sigue considerándose alta nueva a efectos de registro de la entrevista
+                }
+            } else {
+                Optional<Ciudadano> existingCuil = ciudadanoRepository.findByCuil(ciudadano.getCuil());
+                if (existingCuil.isPresent()) {
+                    Ciudadano exist = existingCuil.get();
+                    if (exist.getActivo()) {
+                        throw new Exception("Ya existe un ciudadano registrado con ese CUIL.");
+                    } else {
+                        // Reactivar e integrar el registro inactivo existente
+                        reactivarCiudadanoInactivo(exist, ciudadano);
+                        ciudadano = exist;
+                        isNew = true; // Sigue considerándose alta nueva a efectos de registro de la entrevista
+                    }
+                }
             }
         } else {
             Optional<Ciudadano> cDni = ciudadanoRepository.findByDni(ciudadano.getDni());
@@ -69,7 +99,6 @@ public class CiudadanoService {
             }
         }
 
-        boolean isNew = ciudadano.getId() == null;
         Ciudadano guardado = ciudadanoRepository.save(ciudadano);
 
         if (isNew) {
@@ -95,6 +124,60 @@ public class CiudadanoService {
         }
 
         return guardado;
+    }
+
+    private void reactivarCiudadanoInactivo(Ciudadano target, Ciudadano source) {
+        target.setNombre(source.getNombre());
+        target.setApellido(source.getApellido());
+        target.setDni(source.getDni());
+        target.setCuil(source.getCuil());
+        target.setFechaNacimiento(source.getFechaNacimiento());
+        target.setGenero(source.getGenero());
+        target.setDireccion(source.getDireccion());
+        target.setPuntosReferenciaDomicilio(source.getPuntosReferenciaDomicilio());
+        target.setTelefonoPrimario(source.getTelefonoPrimario());
+        target.setTelefonoSecundario(source.getTelefonoSecundario());
+        target.setEmail(source.getEmail());
+        target.setEstadoCivil(source.getEstadoCivil());
+        target.setHijosACargo(source.getHijosACargo());
+        target.setCudDiscapacidad(source.getCudDiscapacidad());
+        target.setTipoDiscapacidad(source.getTipoDiscapacidad());
+        target.setCudVencimiento(source.getCudVencimiento());
+        target.setMovilidadPropia(source.getMovilidadPropia());
+        target.setLicenciaConducir(source.getLicenciaConducir());
+        target.setCvUrl(source.getCvUrl());
+        target.setTipoEmpleoBuscado(source.getTipoEmpleoBuscado());
+        target.setSituacionMonotributo(source.getSituacionMonotributo());
+        target.setSituacionResponsableInscripto(source.getSituacionResponsableInscripto());
+        target.setSituacionAter(source.getSituacionAter());
+        target.setSituacionHabilitacionMunicipal(source.getSituacionHabilitacionMunicipal());
+        target.setSituacionRegistroEspecifico(source.getSituacionRegistroEspecifico());
+        target.setTieneObraSocial(source.getTieneObraSocial());
+        target.setPlanSocialActivo(source.getPlanSocialActivo());
+        target.setObservacionesGenerales(source.getObservacionesGenerales());
+        target.setHabilidades(source.getHabilidades());
+        target.setEstadoLaboral(source.getEstadoLaboral());
+        target.setRubros(source.getRubros());
+
+        // Actualizar colecciones limpiando y re-asociando
+        target.getEducaciones().clear();
+        if (source.getEducaciones() != null) {
+            for (Educacion edu : source.getEducaciones()) {
+                edu.setCiudadano(target);
+                target.getEducaciones().add(edu);
+            }
+        }
+
+        target.getExperienciasLaborales().clear();
+        if (source.getExperienciasLaborales() != null) {
+            for (ExperienciaLaboral exp : source.getExperienciasLaborales()) {
+                exp.setCiudadano(target);
+                target.getExperienciasLaborales().add(exp);
+            }
+        }
+
+        target.setActivo(true);
+        target.setDeletedAt(null);
     }
 
     public List<Ciudadano> obtenerTodosActivos() {
