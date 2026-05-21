@@ -62,6 +62,14 @@ CREATE TABLE IF NOT EXISTS ciudadanos (
     movilidad_propia BOOLEAN DEFAULT FALSE,
     licencia_conducir VARCHAR(50) DEFAULT 'NO_POSEE',
     cv_url VARCHAR(255),
+    tipo_empleo_buscado VARCHAR(100) DEFAULT 'Cualquiera',
+    situacion_monotributo BOOLEAN DEFAULT FALSE,
+    situacion_responsable_inscripto BOOLEAN DEFAULT FALSE,
+    situacion_ater BOOLEAN DEFAULT FALSE,
+    situacion_habilitacion_municipal BOOLEAN DEFAULT FALSE,
+    situacion_registro_especifico VARCHAR(255) DEFAULT NULL,
+    tiene_obra_social BOOLEAN DEFAULT FALSE,
+    plan_social_activo VARCHAR(150) DEFAULT NULL,
     observaciones_generales TEXT,
     habilidades VARCHAR(500),
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -200,4 +208,16 @@ CREATE TABLE IF NOT EXISTS logs_sistema (
     FOREIGN KEY (id_personal) REFERENCES personal(id)
 ) ENGINE=InnoDB;
 
-SET FOREIGN_KEY_CHECKS 
+-- 9. MIGRACIONES / ACTUALIZACIONES (Para bases de datos existentes)
+---------------------------------------------------
+-- Ejecutar estos comandos ALTER TABLE si ya tenías la base de datos creada previamente:
+-- ALTER TABLE ciudadanos ADD COLUMN tipo_empleo_buscado VARCHAR(100) DEFAULT 'Cualquiera';
+-- ALTER TABLE ciudadanos ADD COLUMN situacion_monotributo BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE ciudadanos ADD COLUMN situacion_responsable_inscripto BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE ciudadanos ADD COLUMN situacion_ater BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE ciudadanos ADD COLUMN situacion_habilitacion_municipal BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE ciudadanos ADD COLUMN situacion_registro_especifico VARCHAR(255) DEFAULT NULL;
+-- ALTER TABLE ciudadanos ADD COLUMN tiene_obra_social BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE ciudadanos ADD COLUMN plan_social_activo VARCHAR(150) DEFAULT NULL;
+
+SET FOREIGN_KEY_CHECKS = 1;

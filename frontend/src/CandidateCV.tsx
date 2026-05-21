@@ -51,6 +51,14 @@ interface CandidateData {
   educaciones: Education[];
   experienciasLaborales: WorkExperience[];
   rubros?: Rubro[];
+  tipoEmpleoBuscado?: string;
+  situacionMonotributo?: boolean;
+  situacionResponsableInscripto?: boolean;
+  situacionAter?: boolean;
+  situacionHabilitacionMunicipal?: boolean;
+  situacionRegistroEspecifico?: string;
+  tieneObraSocial?: boolean;
+  planSocialActivo?: string;
 }
 
 interface CandidateCVProps {
@@ -314,6 +322,71 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                     {rubro.nombre}
                   </div>
                 ))
+              )}
+            </div>
+          </div>
+
+          {/* SITUACIÓN FISCAL Y SOCIAL */}
+          <div>
+            <h4 style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              borderBottom: '1px solid rgba(255,255,255,0.15)',
+              paddingBottom: '8px',
+              marginBottom: '16px',
+              color: '#00b4d8'
+            }}>Situación y Preferencia</h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
+              <div>
+                <span style={{ color: '#00b4d8', fontWeight: 600 }}>Empleo buscado:</span>
+                <span style={{ marginLeft: '6px' }}>{candidate.tipoEmpleoBuscado || 'Cualquiera'}</span>
+              </div>
+              <div>
+                <span style={{ color: '#00b4d8', fontWeight: 600 }}>Obra Social:</span>
+                <span style={{ marginLeft: '6px' }}>{candidate.tieneObraSocial ? 'Sí posee' : 'No posee'}</span>
+              </div>
+              {candidate.planSocialActivo && (
+                <div>
+                  <span style={{ color: '#00b4d8', fontWeight: 600 }}>Plan Social:</span>
+                  <span style={{ marginLeft: '6px' }}>{candidate.planSocialActivo}</span>
+                </div>
+              )}
+              
+              {/* Fiscal labels */}
+              {(candidate.situacionMonotributo || candidate.situacionResponsableInscripto || candidate.situacionAter || candidate.situacionHabilitacionMunicipal || candidate.situacionRegistroEspecifico) && (
+                <div style={{ marginTop: '8px' }}>
+                  <span style={{ color: '#00b4d8', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Habilitaciones:</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {candidate.situacionMonotributo && (
+                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                        Monotributo
+                      </span>
+                    )}
+                    {candidate.situacionResponsableInscripto && (
+                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                        Resp. Inscripto
+                      </span>
+                    )}
+                    {candidate.situacionAter && (
+                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                        ATER
+                      </span>
+                    )}
+                    {candidate.situacionHabilitacionMunicipal && (
+                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+                        Hab. Municipal
+                      </span>
+                    )}
+                    {candidate.situacionRegistroEspecifico && (
+                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px', width: '100%', wordBreak: 'break-all' }}>
+                        Reg: {candidate.situacionRegistroEspecifico}
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>

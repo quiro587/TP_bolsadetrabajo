@@ -71,6 +71,30 @@ public class Ciudadano {
     @Column(name = "cv_url", length = 255)
     private String cvUrl;
 
+    @Column(name = "tipo_empleo_buscado", length = 100)
+    private String tipoEmpleoBuscado = "Cualquiera";
+
+    @Column(name = "situacion_monotributo")
+    private Boolean situacionMonotributo = false;
+
+    @Column(name = "situacion_responsable_inscripto")
+    private Boolean situacionResponsableInscripto = false;
+
+    @Column(name = "situacion_ater")
+    private Boolean situacionAter = false;
+
+    @Column(name = "situacion_habilitacion_municipal")
+    private Boolean situacionHabilitacionMunicipal = false;
+
+    @Column(name = "situacion_registro_especifico", length = 255)
+    private String situacionRegistroEspecifico;
+
+    @Column(name = "tiene_obra_social")
+    private Boolean tieneObraSocial = false;
+
+    @Column(name = "plan_social_activo", length = 150)
+    private String planSocialActivo;
+
     @Column(name = "observaciones_generales", columnDefinition = "TEXT")
     private String observacionesGenerales;
 
@@ -189,6 +213,30 @@ public class Ciudadano {
 
     public String getObservacionesGenerales() { return observacionesGenerales; }
     public void setObservacionesGenerales(String observacionesGenerales) { this.observacionesGenerales = observacionesGenerales; }
+
+    public String getTipoEmpleoBuscado() { return tipoEmpleoBuscado; }
+    public void setTipoEmpleoBuscado(String tipoEmpleoBuscado) { this.tipoEmpleoBuscado = tipoEmpleoBuscado; }
+
+    public Boolean getSituacionMonotributo() { return situacionMonotributo; }
+    public void setSituacionMonotributo(Boolean situacionMonotributo) { this.situacionMonotributo = situacionMonotributo; }
+
+    public Boolean getSituacionResponsableInscripto() { return situacionResponsableInscripto; }
+    public void setSituacionResponsableInscripto(Boolean situacionResponsableInscripto) { this.situacionResponsableInscripto = situacionResponsableInscripto; }
+
+    public Boolean getSituacionAter() { return situacionAter; }
+    public void setSituacionAter(Boolean situacionAter) { this.situacionAter = situacionAter; }
+
+    public Boolean getSituacionHabilitacionMunicipal() { return situacionHabilitacionMunicipal; }
+    public void setSituacionHabilitacionMunicipal(Boolean situacionHabilitacionMunicipal) { this.situacionHabilitacionMunicipal = situacionHabilitacionMunicipal; }
+
+    public String getSituacionRegistroEspecifico() { return situacionRegistroEspecifico; }
+    public void setSituacionRegistroEspecifico(String situacionRegistroEspecifico) { this.situacionRegistroEspecifico = situacionRegistroEspecifico; }
+
+    public Boolean getTieneObraSocial() { return tieneObraSocial; }
+    public void setTieneObraSocial(Boolean tieneObraSocial) { this.tieneObraSocial = tieneObraSocial; }
+
+    public String getPlanSocialActivo() { return planSocialActivo; }
+    public void setPlanSocialActivo(String planSocialActivo) { this.planSocialActivo = planSocialActivo; }
 
     public String getHabilidades() { return habilidades; }
     public void setHabilidades(String habilidades) { this.habilidades = habilidades; }

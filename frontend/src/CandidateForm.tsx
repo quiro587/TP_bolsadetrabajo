@@ -53,6 +53,14 @@ interface CandidateData {
   educaciones: Education[];
   experienciasLaborales: WorkExperience[];
   rubros?: Rubro[];
+  tipoEmpleoBuscado: string;
+  situacionMonotributo: boolean;
+  situacionResponsableInscripto: boolean;
+  situacionAter: boolean;
+  situacionHabilitacionMunicipal: boolean;
+  situacionRegistroEspecifico?: string;
+  tieneObraSocial: boolean;
+  planSocialActivo?: string;
 }
 
 interface CandidateFormProps {
@@ -86,7 +94,15 @@ const emptyForm: CandidateData = {
   estadoLaboral: 'EN_BUSQUEDA_ACTIVA',
   educaciones: [],
   experienciasLaborales: [],
-  rubros: []
+  rubros: [],
+  tipoEmpleoBuscado: 'Cualquiera',
+  situacionMonotributo: false,
+  situacionResponsableInscripto: false,
+  situacionAter: false,
+  situacionHabilitacionMunicipal: false,
+  situacionRegistroEspecifico: '',
+  tieneObraSocial: false,
+  planSocialActivo: ''
 };
 
 export default function CandidateForm({ token, candidateId, onBack, onSaveSuccess }: CandidateFormProps) {
@@ -1101,6 +1117,149 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
               </span>
             ))
           )}
+        </div>
+      </div>
+
+      {/* SECTION 5: SITUACIÓN FISCAL, SOCIAL Y PREFERENCIA LABORAL */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        border: '1px solid hsl(var(--border))',
+        boxShadow: 'var(--shadow)',
+        padding: '32px',
+        marginBottom: '40px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '6px',
+          background: 'linear-gradient(90deg, #10b981, #059669)'
+        }}></div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ width: '8px', height: '24px', borderRadius: '4px', backgroundColor: '#10b981' }}></div>
+          <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Situación Fiscal, Social y Preferencia Laboral
+          </h3>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+          <div className="form-group">
+            <label>Tipo de Empleo Buscado</label>
+            <select 
+              name="tipoEmpleoBuscado" 
+              value={formData.tipoEmpleoBuscado} 
+              onChange={handleChange}
+            >
+              <option value="Cualquiera">Cualquiera / Indiferente</option>
+              <option value="Full-time">Tiempo Completo (Full-time)</option>
+              <option value="Part-time">Medio Tiempo (Part-time)</option>
+              <option value="Temporal">Temporal / Por temporada</option>
+              <option value="Profesional independiente">Profesional Independiente (Freelance)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>¿Cuenta con Obra Social / Cobertura Médica?</label>
+            <select 
+              name="tieneObraSocial" 
+              value={formData.tieneObraSocial ? "true" : "false"} 
+              onChange={(e) => {
+                const val = e.target.value === "true";
+                setFormData(prev => ({ ...prev, tieneObraSocial: val }));
+              }}
+            >
+              <option value="false">No posee cobertura</option>
+              <option value="true">Sí posee Obra Social</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Plan Social Activo (Si percibe alguno)</label>
+            <input 
+              type="text" 
+              name="planSocialActivo" 
+              placeholder="Ej: Potenciar Trabajo, Tarjeta Alimentar, Ninguno"
+              value={formData.planSocialActivo || ''} 
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        <div style={{
+          borderTop: '1px solid hsl(var(--border))',
+          paddingTop: '24px',
+          marginTop: '24px'
+        }}>
+          <h4 style={{ fontSize: '15px', fontWeight: 600, color: '#334155', marginBottom: '16px' }}>
+            Situación Fiscal y Habilitaciones (Útil para Emprendedores y Autónomos)
+          </h4>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '20px',
+            marginBottom: '20px'
+          }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+              <input 
+                type="checkbox" 
+                name="situacionMonotributo" 
+                checked={formData.situacionMonotributo} 
+                onChange={handleChange}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              ¿Monotributista?
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+              <input 
+                type="checkbox" 
+                name="situacionResponsableInscripto" 
+                checked={formData.situacionResponsableInscripto} 
+                onChange={handleChange}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              ¿Responsable Inscripto?
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+              <input 
+                type="checkbox" 
+                name="situacionAter" 
+                checked={formData.situacionAter} 
+                onChange={handleChange}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              ¿Inscripto en ATER?
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+              <input 
+                type="checkbox" 
+                name="situacionHabilitacionMunicipal" 
+                checked={formData.situacionHabilitacionMunicipal} 
+                onChange={handleChange}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              ¿Tiene Habilitación Municipal?
+            </label>
+          </div>
+
+          <div className="form-group" style={{ maxWidth: '500px', marginTop: '16px' }}>
+            <label>Registro / Habilitación Específica (Si aplica)</label>
+            <input 
+              type="text" 
+              name="situacionRegistroEspecifico" 
+              placeholder="Ej: Carnet manipulador de alimentos, Registro de conducir profesional..."
+              value={formData.situacionRegistroEspecifico || ''} 
+              onChange={handleChange}
+            />
+          </div>
         </div>
       </div>
     </form>
