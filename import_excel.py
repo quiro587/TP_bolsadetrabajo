@@ -154,7 +154,7 @@ def main():
     unique_rubros = set()
     unique_interviewers = set()
     
-    with open(csv_file, mode='r', encoding='latin1') as f:
+    with open(csv_file, mode='r', encoding='utf-8-sig') as f:
         reader = csv.reader(f)
         headers = next(reader)
         for row in reader:
@@ -215,7 +215,7 @@ def main():
     experiences_inserted = 0
     interviews_inserted = 0
     
-    with open(csv_file, mode='r', encoding='latin1') as f:
+    with open(csv_file, mode='r', encoding='utf-8-sig') as f:
         reader = csv.reader(f)
         headers = next(reader)
         
