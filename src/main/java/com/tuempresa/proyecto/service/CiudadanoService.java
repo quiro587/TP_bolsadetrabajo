@@ -3,12 +3,18 @@ package com.tuempresa.proyecto.service;
 import com.tuempresa.proyecto.entity.Ciudadano;
 import com.tuempresa.proyecto.entity.Educacion;
 import com.tuempresa.proyecto.entity.ExperienciaLaboral;
+import com.tuempresa.proyecto.entity.Entrevista;
+import com.tuempresa.proyecto.entity.User;
 import com.tuempresa.proyecto.repository.CiudadanoRepository;
+import com.tuempresa.proyecto.repository.EntrevistaRepository;
+import com.tuempresa.proyecto.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +27,12 @@ public class CiudadanoService {
 
     @Autowired
     private CiudadanoRepository ciudadanoRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private EntrevistaRepository entrevistaRepository;
 
     @Transactional
     public Ciudadano guardarCiudadano(Ciudadano ciudadano) throws Exception {
@@ -57,7 +69,32 @@ public class CiudadanoService {
             }
         }
 
-        return ciudadanoRepository.save(ciudadano);
+        boolean isNew = ciudadano.getId() == null;
+        Ciudadano guardado = ciudadanoRepository.save(ciudadano);
+
+        if (isNew) {
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated()) {
+                    String username = auth.getName();
+                    Optional<User> optUser = userRepository.findByUsername(username);
+                    if (optUser.isPresent()) {
+                        User user = optUser.get();
+                        Entrevista entrevista = new Entrevista();
+                        entrevista.setCiudadano(guardado);
+                        entrevista.setPersonal(user);
+                        entrevista.setFechaEntrevista(LocalDateTime.now());
+                        entrevista.setObjetivoConsulta("Registro inicial");
+                        entrevista.setObservacionesTecnicas("Agregado por sistema");
+                        entrevistaRepository.save(entrevista);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error al asociar entrevistador al ciudadano registrado: " + e.getMessage());
+            }
+        }
+
+        return guardado;
     }
 
     public List<Ciudadano> obtenerTodosActivos() {

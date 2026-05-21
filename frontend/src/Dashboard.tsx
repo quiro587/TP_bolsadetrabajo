@@ -21,12 +21,13 @@ interface Candidate {
 
 interface DashboardProps {
   token: string;
+  userRole?: string;
   onNewCandidate: () => void;
   onEditCandidate: (id: number) => void;
   onViewCV: (id: number) => void;
 }
 
-export default function Dashboard({ token, onNewCandidate, onEditCandidate, onViewCV }: DashboardProps) {
+export default function Dashboard({ token, userRole, onNewCandidate, onEditCandidate, onViewCV }: DashboardProps) {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -616,31 +617,33 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                           >
                             <Edit2 size={15} />
                           </button>
-                          <button 
-                            onClick={() => handleDelete(candidate.id, `${candidate.nombre} ${candidate.apellido}`)}
-                            style={{
-                              padding: '6px',
-                              border: '1px solid #e2e8f0',
-                              backgroundColor: 'white',
-                              color: '#64748b',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              transition: 'var(--transition)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = '#ef4444';
-                              e.currentTarget.style.color = '#ef4444';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = '#e2e8f0';
-                              e.currentTarget.style.color = '#64748b';
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {userRole === 'SuperAdmin' && (
+                            <button 
+                              onClick={() => handleDelete(candidate.id, `${candidate.nombre} ${candidate.apellido}`)}
+                              style={{
+                                padding: '6px',
+                                border: '1px solid #e2e8f0',
+                                backgroundColor: 'white',
+                                color: '#64748b',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                transition: 'var(--transition)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = '#ef4444';
+                                e.currentTarget.style.color = '#ef4444';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = '#e2e8f0';
+                                e.currentTarget.style.color = '#64748b';
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -23,6 +23,19 @@ public class JwtProvider {
                 .compact();
     }
 
+    public String generateToken(com.tuempresa.proyecto.entity.User user) {
+        String cleanRole = user.getRole() != null ? user.getRole().replace("ROLE_", "") : null;
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("role", cleanRole)
+                .claim("nombreCompleto", user.getNombreCompleto())
+                .claim("userId", user.getId())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     public String getUsernameFromToken(String token) {
         return getClaims(token).getSubject();
     }

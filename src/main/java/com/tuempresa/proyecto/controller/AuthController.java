@@ -38,7 +38,9 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(), request.getPassword())
             );
-            String token = jwtProvider.generateToken(request.getUsername());
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+            String token = jwtProvider.generateToken(user);
             return ResponseEntity.ok(new AuthResponse(token));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -56,9 +58,9 @@ public class AuthController {
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("ROLE_USER");
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        String token = jwtProvider.generateToken(request.getUsername());
+        String token = jwtProvider.generateToken(savedUser);
         return ResponseEntity.ok(new AuthResponse(token));
     }
 }

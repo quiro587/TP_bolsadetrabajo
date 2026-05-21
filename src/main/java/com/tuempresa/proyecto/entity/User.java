@@ -31,6 +31,9 @@ public class User {
     @Column(name = "ultimo_acceso")
     private String ultimoAcceso;
 
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
     // Getters y Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -52,4 +55,7 @@ public class User {
 
     public String getUltimoAcceso() { return ultimoAcceso; }
     public void setUltimoAcceso(String ultimoAcceso) { this.ultimoAcceso = ultimoAcceso; }
+
+    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

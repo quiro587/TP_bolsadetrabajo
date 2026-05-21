@@ -42,6 +42,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/ciudadanos/**").hasRole("SuperAdmin")
+                .requestMatchers("/api/stats").hasRole("SuperAdmin")
+                .requestMatchers("/api/users/**").hasRole("SuperAdmin")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
