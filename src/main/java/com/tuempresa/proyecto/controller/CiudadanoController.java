@@ -18,13 +18,20 @@ public class CiudadanoController {
     private CiudadanoService ciudadanoService;
 
     @GetMapping
-    public ResponseEntity<Page<Ciudadano>> listarActivos(
+    public ResponseEntity<?> listarActivos(
             @RequestParam(value = "buscar", required = false) String buscar,
             @RequestParam(value = "rubroId", required = false) Integer rubroId,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size) {
-        Page<Ciudadano> ciudadanos = ciudadanoService.buscarActivosConFiltroYPagina(buscar, rubroId, page, size);
-        return ResponseEntity.ok(ciudadanos);
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+        if (page == null && size == null) {
+            List<Ciudadano> ciudadanos = ciudadanoService.buscarActivosConFiltro(buscar, rubroId);
+            return ResponseEntity.ok(ciudadanos);
+        } else {
+            int p = page != null ? page : 0;
+            int s = size != null ? size : 20;
+            Page<Ciudadano> ciudadanos = ciudadanoService.buscarActivosConFiltroYPagina(buscar, rubroId, p, s);
+            return ResponseEntity.ok(ciudadanos);
+        }
     }
 
     @GetMapping("/{id}")

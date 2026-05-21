@@ -35,11 +35,15 @@ export default function App() {
         }
         return res.json();
       })
-      .then((data: any[]) => {
-        const total = data.length;
+      .then((data: any) => {
+        // Soporta tanto una lista plana como un objeto de paginación Page de Spring
+        const isPage = data && !Array.isArray(data) && Array.isArray(data.content);
+        const list = isPage ? data.content : (Array.isArray(data) ? data : []);
+        const total = isPage ? (data.totalElements ?? list.length) : list.length;
+
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        const lastWeek = data.filter(c => {
+        const lastWeek = list.filter((c: any) => {
           if (!c.fechaRegistro) return false;
           const regDate = new Date(c.fechaRegistro);
           return regDate >= oneWeekAgo;
