@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Eye, Edit2, Trash2, Loader2, AlertCircle, User, X, Briefcase } from 'lucide-react';
+import { Search, Eye, Edit2, Trash2, Loader2, AlertCircle, User, X, Briefcase, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Rubro {
   id: number;
@@ -38,6 +38,12 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
   const [newRubroName, setNewRubroName] = useState('');
   const [creatingRubro, setCreatingRubro] = useState(false);
 
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [editingRubroId, setEditingRubroId] = useState<number | null>(null);
+  const [editingRubroName, setEditingRubroName] = useState('');
+
   const fetchRubros = async () => {
     try {
       const response = await fetch('http://localhost:8080/api/rubros', {
@@ -54,7 +60,7 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
     }
   };
 
-  const fetchCandidates = async (query = '', rubroId: number | null = null) => {
+  const fetchCandidates = async (query = '', rubroId: number | null = null, pageNum = 0) => {
     setLoading(true);
     setError('');
     try {
@@ -65,6 +71,8 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
       if (rubroId !== null) {
         params.append('rubroId', rubroId.toString());
       }
+      params.append('page', pageNum.toString());
+      params.append('size', '20');
       
       const url = `http://localhost:8080/api/ciudadanos?${params.toString()}`;
 
@@ -83,7 +91,9 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
       }
 
       const data = await response.json();
-      setCandidates(data);
+      setCandidates(data.content || []);
+      setTotalPages(data.totalPages || 0);
+      setTotalElements(data.totalElements || 0);
     } catch (err: any) {
       setError(err.message || 'Error de conexión.');
     } finally {
@@ -118,13 +128,67 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
     }
   };
 
+  const handleUpdateRubro = async (id: number) => {
+    if (!editingRubroName.trim()) return;
+    try {
+      const response = await fetch(`http://localhost:8080/api/rubros/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ nombre: editingRubroName.trim() })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Error al actualizar el rubro.');
+      }
+
+      setEditingRubroId(null);
+      setEditingRubroName('');
+      await fetchRubros();
+      fetchCandidates(search, selectedRubroId, page);
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar el rubro.');
+    }
+  };
+
+  const handleDeleteRubro = async (id: number, name: string) => {
+    if (!window.confirm(`¿Estás seguro de que deseas dar de baja el rubro "${name}"? No se eliminarán los postulantes vinculados, pero este rubro ya no aparecerá como opción.`)) {
+      return;
+    }
+    try {
+      const response = await fetch(`http://localhost:8080/api/rubros/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al dar de baja el rubro.');
+      }
+
+      await fetchRubros();
+      if (selectedRubroId === id) {
+        setSelectedRubroId(null);
+        setPage(0);
+      } else {
+        fetchCandidates(search, selectedRubroId, page);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error al dar de baja el rubro.');
+    }
+  };
+
   useEffect(() => {
     fetchRubros();
   }, []);
 
   useEffect(() => {
-    fetchCandidates(search, selectedRubroId);
-  }, [search, selectedRubroId]);
+    fetchCandidates(search, selectedRubroId, page);
+  }, [search, selectedRubroId, page]);
 
   const handleDelete = async (id: number, name: string) => {
     if (!window.confirm(`¿Estás seguro de que deseas dar de baja al postulante ${name}?`)) {
@@ -247,7 +311,10 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
               type="text"
               placeholder="Buscar por nombre..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
               style={{
                 paddingLeft: '44px',
                 border: 'none',
@@ -268,6 +335,7 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
               onChange={(e) => {
                 const val = e.target.value;
                 setSelectedRubroId(val === 'all' ? null : Number(val));
+                setPage(0);
               }}
               style={{
                 border: 'none',
@@ -359,214 +427,313 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
             <span style={{ color: 'hsl(var(--text-muted))', fontWeight: 500 }}>No se encontraron postulantes.</span>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ 
-                  backgroundColor: '#fafbfc', 
-                  borderBottom: '1px solid hsl(var(--border))'
-                }}>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Postulante</th>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Rubro</th>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Fecha</th>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Estado</th>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>CV</th>
-                  <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {candidates.map((candidate, idx) => (
-                  <tr 
-                    key={candidate.id} 
-                    style={{ 
-                      borderBottom: idx === candidates.length - 1 ? 'none' : '1px solid hsl(var(--border) / 0.7)',
-                      transition: 'var(--transition)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                  >
-                    {/* Postulante Column */}
-                    <td style={{ padding: '20px 24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          backgroundColor: '#eff6ff',
-                          color: '#3b82f6',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          <User size={20} />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '15px' }}>
-                            {candidate.nombre} {candidate.apellido}
-                          </div>
-                          <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                            {candidate.email || 'correo@sin-email.com'}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                            <span style={{ fontWeight: 500 }}>Tel:</span> {candidate.telefonoPrimario || 'Sin teléfono'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Rubro Column */}
-                    <td style={{ padding: '20px 24px' }}>
-                      {candidate.rubros && candidate.rubros.length > 0 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {candidate.rubros.map((rubro) => (
-                            <span
-                              key={rubro.id}
-                              style={{
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                backgroundColor: 'hsl(var(--primary) / 0.08)',
-                                color: 'hsl(var(--primary))',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.2px'
-                              }}
-                            >
-                              {rubro.nombre}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>Sin rubro</span>
-                      )}
-                    </td>
-
-                    {/* Fecha Column */}
-                    <td style={{ padding: '20px 24px', color: 'hsl(var(--text-muted))', fontSize: '14px' }}>
-                      {formatDate(candidate.fechaRegistro)}
-                    </td>
-
-                    {/* Estado Badge column (Clickable & Interactive) */}
-                    <td style={{ padding: '20px 24px' }}>
-                      <button
-                        onClick={() => toggleCandidateStatus(candidate.id, candidate.estadoLaboral)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          display: 'inline-flex',
-                          outline: 'none',
-                          transition: 'transform 0.2s ease, opacity 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                          e.currentTarget.style.opacity = '0.9';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.opacity = '1';
-                        }}
-                        title="Haga clic para cambiar el estado laboral"
-                      >
-                        <span className={`badge ${getBadgeClass(candidate.estadoLaboral)}`}>
-                          {formatStatusText(candidate.estadoLaboral)}
-                        </span>
-                      </button>
-                    </td>
-
-                    {/* Ver CV column (Bordered Black Style) */}
-                    <td style={{ padding: '20px 24px', textAlign: 'center' }}>
-                      <button 
-                        onClick={() => onViewCV(candidate.id)}
-                        style={{
-                          padding: '6px 14px',
-                          borderRadius: '6px',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                          backgroundColor: 'transparent',
-                          border: '1px solid #1e293b',
-                          color: '#1e293b',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          cursor: 'pointer',
-                          transition: 'var(--transition)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f1f5f9';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <Eye size={14} />
-                        Ver CV
-                      </button>
-                    </td>
-
-                    {/* Actions column (With borders and hover animations) */}
-                    <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '8px' }}>
-                        <button 
-                          onClick={() => onEditCandidate(candidate.id)}
-                          style={{
-                            padding: '6px',
-                            border: '1px solid #e2e8f0',
-                            backgroundColor: 'white',
-                            color: '#64748b',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            transition: 'var(--transition)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#3b82f6';
-                            e.currentTarget.style.color = '#3b82f6';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '#e2e8f0';
-                            e.currentTarget.style.color = '#64748b';
-                          }}
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(candidate.id, `${candidate.nombre} ${candidate.apellido}`)}
-                          style={{
-                            padding: '6px',
-                            border: '1px solid #e2e8f0',
-                            backgroundColor: 'white',
-                            color: '#64748b',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            transition: 'var(--transition)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = '#ef4444';
-                            e.currentTarget.style.color = '#ef4444';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = '#e2e8f0';
-                            e.currentTarget.style.color = '#64748b';
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ 
+                    backgroundColor: '#fafbfc', 
+                    borderBottom: '1px solid hsl(var(--border))'
+                  }}>
+                    <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Postulante</th>
+                    <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Rubro</th>
+                    <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Fecha</th>
+                    <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px' }}>Estado</th>
+                    <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>CV</th>
+                    <th style={{ padding: '16px 24px', fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'right' }}>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {candidates.map((candidate, idx) => (
+                    <tr 
+                      key={candidate.id} 
+                      style={{ 
+                        borderBottom: idx === candidates.length - 1 ? 'none' : '1px solid hsl(var(--border) / 0.7)',
+                        transition: 'var(--transition)'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    >
+                      {/* Postulante Column */}
+                      <td style={{ padding: '20px 24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            backgroundColor: '#eff6ff',
+                            color: '#3b82f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <User size={20} />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '15px' }}>
+                              {candidate.nombre} {candidate.apellido}
+                            </div>
+                            <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                              {candidate.email || 'correo@sin-email.com'}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                              <span style={{ fontWeight: 500 }}>Tel:</span> {candidate.telefonoPrimario || 'Sin teléfono'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Rubro Column */}
+                      <td style={{ padding: '20px 24px' }}>
+                        {candidate.rubros && candidate.rubros.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {candidate.rubros.map((rubro) => (
+                              <span
+                                key={rubro.id}
+                                style={{
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  backgroundColor: 'hsl(var(--primary) / 0.08)',
+                                  color: 'hsl(var(--primary))',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.2px'
+                                }}
+                              >
+                                {rubro.nombre}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>Sin rubro</span>
+                        )}
+                      </td>
+
+                      {/* Fecha Column */}
+                      <td style={{ padding: '20px 24px', color: 'hsl(var(--text-muted))', fontSize: '14px' }}>
+                        {formatDate(candidate.fechaRegistro)}
+                      </td>
+
+                      {/* Estado Badge column (Clickable & Interactive) */}
+                      <td style={{ padding: '20px 24px' }}>
+                        <button
+                          onClick={() => toggleCandidateStatus(candidate.id, candidate.estadoLaboral)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            display: 'inline-flex',
+                            outline: 'none',
+                            transition: 'transform 0.2s ease, opacity 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                            e.currentTarget.style.opacity = '0.9';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          title="Haga clic para cambiar el estado laboral"
+                        >
+                          <span className={`badge ${getBadgeClass(candidate.estadoLaboral)}`}>
+                            {formatStatusText(candidate.estadoLaboral)}
+                          </span>
+                        </button>
+                      </td>
+
+                      {/* Ver CV column (Bordered Black Style) */}
+                      <td style={{ padding: '20px 24px', textAlign: 'center' }}>
+                        <button 
+                          onClick={() => onViewCV(candidate.id)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            backgroundColor: 'transparent',
+                            border: '1px solid #1e293b',
+                            color: '#1e293b',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            transition: 'var(--transition)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f1f5f9';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <Eye size={14} />
+                          Ver CV
+                        </button>
+                      </td>
+
+                      {/* Actions column (With borders and hover animations) */}
+                      <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '8px' }}>
+                          <button 
+                            onClick={() => onEditCandidate(candidate.id)}
+                            style={{
+                              padding: '6px',
+                              border: '1px solid #e2e8f0',
+                              backgroundColor: 'white',
+                              color: '#64748b',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              transition: 'var(--transition)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#3b82f6';
+                              e.currentTarget.style.color = '#3b82f6';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#e2e8f0';
+                              e.currentTarget.style.color = '#64748b';
+                            }}
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(candidate.id, `${candidate.nombre} ${candidate.apellido}`)}
+                            style={{
+                              padding: '6px',
+                              border: '1px solid #e2e8f0',
+                              backgroundColor: 'white',
+                              color: '#64748b',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              transition: 'var(--transition)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#ef4444';
+                              e.currentTarget.style.color = '#ef4444';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#e2e8f0';
+                              e.currentTarget.style.color = '#64748b';
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 24px',
+              borderTop: '1px solid hsl(var(--border) / 0.7)',
+              backgroundColor: '#fafbfc',
+              gap: '16px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', fontWeight: 500 }}>
+                Mostrando <span style={{ fontWeight: 600, color: '#0f172a' }}>{candidates.length}</span> de <span style={{ fontWeight: 600, color: '#0f172a' }}>{totalElements}</span> postulantes
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  disabled={page === 0}
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: page === 0 ? '#f1f5f9' : 'white',
+                    color: page === 0 ? '#94a3b8' : '#334155',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: page === 0 ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    gap: '4px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (page > 0) {
+                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                      e.currentTarget.style.borderColor = '#94a3b8';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (page > 0) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                    }
+                  }}
+                >
+                  <ChevronLeft size={16} />
+                  Anterior
+                </button>
+
+                <div style={{
+                  fontSize: '13px',
+                  color: '#475569',
+                  fontWeight: 600,
+                  padding: '0 8px'
+                }}>
+                  Página <span style={{ color: '#0f172a' }}>{page + 1}</span> de <span style={{ color: '#0f172a' }}>{totalPages || 1}</span>
+                </div>
+
+                <button
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: page >= totalPages - 1 ? '#f1f5f9' : 'white',
+                    color: page >= totalPages - 1 ? '#94a3b8' : '#334155',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: page >= totalPages - 1 ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    gap: '4px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (page < totalPages - 1) {
+                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                      e.currentTarget.style.borderColor = '#94a3b8';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (page < totalPages - 1) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                    }
+                  }}
+                >
+                  Siguiente
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -629,7 +796,7 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                 Rubros Existentes ({rubros.length})
               </label>
               <div style={{
-                maxHeight: '180px',
+                maxHeight: '220px',
                 overflowY: 'auto',
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
@@ -637,33 +804,135 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                 marginTop: '8px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px'
+                gap: '6px'
               }}>
                 {rubros.length === 0 ? (
                   <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', padding: '8px' }}>
                     No hay rubros creados.
                   </span>
                 ) : (
-                  rubros.map(r => (
-                    <div
-                      key={r.id}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        color: '#334155',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}
-                    >
-                      <span style={{ fontWeight: 500 }}>{r.nombre}</span>
-                      <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, textTransform: 'uppercase' }}>
-                        Activo
-                      </span>
-                    </div>
-                  ))
+                  rubros.map(r => {
+                    const isEditing = editingRubroId === r.id;
+                    return (
+                      <div
+                        key={r.id}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#f8fafc',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          color: '#334155',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          border: '1px solid #e2e8f0'
+                        }}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editingRubroName}
+                            onChange={(e) => setEditingRubroName(e.target.value)}
+                            style={{
+                              flex: 1,
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '13px',
+                              outline: 'none'
+                            }}
+                            onKeyDown={async (e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                await handleUpdateRubro(r.id);
+                              } else if (e.key === 'Escape') {
+                                setEditingRubroId(null);
+                              }
+                            }}
+                            autoFocus
+                          />
+                        ) : (
+                          <span style={{ fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {r.nombre}
+                          </span>
+                        )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={() => handleUpdateRubro(r.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#10b981',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Guardar cambios"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                onClick={() => setEditingRubroId(null)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Cancelar"
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingRubroId(r.id);
+                                  setEditingRubroName(r.nombre);
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#64748b',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Editar rubro"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteRubro(r.id, r.nombre)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                                title="Dar de baja rubro"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>

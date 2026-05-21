@@ -5,6 +5,10 @@ import com.tuempresa.proyecto.entity.Educacion;
 import com.tuempresa.proyecto.entity.ExperienciaLaboral;
 import com.tuempresa.proyecto.repository.CiudadanoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,6 +79,12 @@ public class CiudadanoService {
                 .toList();
         }
         return lista;
+    }
+
+    public Page<Ciudadano> buscarActivosConFiltroYPagina(String search, Integer rubroId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        String cleanSearch = (search == null || search.trim().isEmpty()) ? null : search.trim();
+        return ciudadanoRepository.buscarCiudadanosConFiltroYPagina(cleanSearch, rubroId, pageable);
     }
 
     public Optional<Ciudadano> obtenerPorId(Integer id) {

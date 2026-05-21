@@ -3,6 +3,7 @@ package com.tuempresa.proyecto.controller;
 import com.tuempresa.proyecto.entity.Ciudadano;
 import com.tuempresa.proyecto.service.CiudadanoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +18,12 @@ public class CiudadanoController {
     private CiudadanoService ciudadanoService;
 
     @GetMapping
-    public ResponseEntity<List<Ciudadano>> listarActivos(
+    public ResponseEntity<Page<Ciudadano>> listarActivos(
             @RequestParam(value = "buscar", required = false) String buscar,
-            @RequestParam(value = "rubroId", required = false) Integer rubroId) {
-        List<Ciudadano> ciudadanos = ciudadanoService.buscarActivosConFiltro(buscar, rubroId);
+            @RequestParam(value = "rubroId", required = false) Integer rubroId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        Page<Ciudadano> ciudadanos = ciudadanoService.buscarActivosConFiltroYPagina(buscar, rubroId, page, size);
         return ResponseEntity.ok(ciudadanos);
     }
 
