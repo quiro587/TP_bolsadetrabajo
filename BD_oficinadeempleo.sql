@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS ciudadanos (
     licencia_conducir VARCHAR(50) DEFAULT 'NO_POSEE',
     cv_url VARCHAR(255),
     observaciones_generales TEXT,
+    habilidades VARCHAR(500),
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
     estado_laboral ENUM('DESEMPLEADO', 'EMPLEADO', 'EN_BUSQUEDA_ACTIVA', 'PROGRAMA_SOCIAL') DEFAULT 'DESEMPLEADO',
     activo BOOLEAN DEFAULT TRUE,

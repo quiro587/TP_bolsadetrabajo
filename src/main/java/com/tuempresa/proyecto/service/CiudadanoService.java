@@ -1,9 +1,16 @@
 package com.tuempresa.proyecto.service;
 
 import com.tuempresa.proyecto.entity.Ciudadano;
+import com.tuempresa.proyecto.entity.Educacion;
+import com.tuempresa.proyecto.entity.ExperienciaLaboral;
 import com.tuempresa.proyecto.repository.CiudadanoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CiudadanoService {
@@ -11,13 +18,65 @@ public class CiudadanoService {
     @Autowired
     private CiudadanoRepository ciudadanoRepository;
 
+    @Transactional
     public Ciudadano guardarCiudadano(Ciudadano ciudadano) throws Exception {
-        if (ciudadanoRepository.findByDni(ciudadano.getDni()).isPresent()) {
-            throw new Exception("Ya existe un ciudadano registrado con ese DNI.");
+        // Validar unicidad de DNI y CUIL
+        if (ciudadano.getId() == null) {
+            if (ciudadanoRepository.findByDni(ciudadano.getDni()).isPresent()) {
+                throw new Exception("Ya existe un ciudadano registrado con ese DNI.");
+            }
+            if (ciudadanoRepository.findByCuil(ciudadano.getCuil()).isPresent()) {
+                throw new Exception("Ya existe un ciudadano registrado con ese CUIL.");
+            }
+        } else {
+            Optional<Ciudadano> cDni = ciudadanoRepository.findByDni(ciudadano.getDni());
+            if (cDni.isPresent() && !cDni.get().getId().equals(ciudadano.getId())) {
+                throw new Exception("Ya existe otro ciudadano registrado con ese DNI.");
+            }
+            Optional<Ciudadano> cCuil = ciudadanoRepository.findByCuil(ciudadano.getCuil());
+            if (cCuil.isPresent() && !cCuil.get().getId().equals(ciudadano.getId())) {
+                throw new Exception("Ya existe otro ciudadano registrado con ese CUIL.");
+            }
         }
-        if (ciudadanoRepository.findByCuil(ciudadano.getCuil()).isPresent()) {
-            throw new Exception("Ya existe un ciudadano registrado con ese CUIL.");
+
+        // Establecer la relación bidireccional para Educacion
+        if (ciudadano.getEducaciones() != null) {
+            for (Educacion edu : ciudadano.getEducaciones()) {
+                edu.setCiudadano(ciudadano);
+            }
         }
+
+        // Establecer la relación bidireccional para ExperienciaLaboral
+        if (ciudadano.getExperienciasLaborales() != null) {
+            for (ExperienciaLaboral exp : ciudadano.getExperienciasLaborales()) {
+                exp.setCiudadano(ciudadano);
+            }
+        }
+
         return ciudadanoRepository.save(ciudadano);
+    }
+
+    public List<Ciudadano> obtenerTodosActivos() {
+        return ciudadanoRepository.findByActivoTrue();
+    }
+
+    public List<Ciudadano> buscarActivos(String search) {
+        if (search == null || search.trim().isEmpty()) {
+            return obtenerTodosActivos();
+        }
+        return ciudadanoRepository.buscarCiudadanosActivos(search.trim());
+    }
+
+    public Optional<Ciudadano> obtenerPorId(Integer id) {
+        return ciudadanoRepository.findById(id).filter(Ciudadano::getActivo);
+    }
+
+    @Transactional
+    public void bajaLogica(Integer id) throws Exception {
+        Ciudadano ciudadano = ciudadanoRepository.findById(id)
+                .orElseThrow(() -> new Exception("Ciudadano no encontrado con id: " + id));
+        ciudadano.setActivo(false);
+        ciudadano.setDeletedAt(LocalDateTime.now());
+        ciudadanoRepository.save(ciudadano);
     }
 }
