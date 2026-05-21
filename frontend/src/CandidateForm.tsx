@@ -20,6 +20,12 @@ interface WorkExperience {
   tareasRealizadas: string;
 }
 
+interface Rubro {
+  id: number;
+  nombre: string;
+  activo?: boolean;
+}
+
 interface CandidateData {
   id?: number;
   nombre: string;
@@ -46,6 +52,7 @@ interface CandidateData {
   estadoLaboral: string;
   educaciones: Education[];
   experienciasLaborales: WorkExperience[];
+  rubros?: Rubro[];
 }
 
 interface CandidateFormProps {
@@ -78,7 +85,8 @@ const emptyForm: CandidateData = {
   habilidades: '',
   estadoLaboral: 'EN_BUSQUEDA_ACTIVA',
   educaciones: [],
-  experienciasLaborales: []
+  experienciasLaborales: [],
+  rubros: []
 };
 
 export default function CandidateForm({ token, candidateId, onBack, onSaveSuccess }: CandidateFormProps) {
@@ -87,6 +95,27 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
   const [skills, setSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [availableRubros, setAvailableRubros] = useState<Rubro[]>([]);
+
+  // Fetch rubros
+  useEffect(() => {
+    const fetchRubros = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/rubros', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableRubros(data);
+        }
+      } catch (err) {
+        console.error('Error fetching rubros:', err);
+      }
+    };
+    fetchRubros();
+  }, [token]);
 
   // Fetch candidate data if in edit mode
   useEffect(() => {
@@ -112,6 +141,7 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
             fechaNacimiento: data.fechaNacimiento ? data.fechaNacimiento.substring(0, 10) : '',
             cudVencimiento: data.cudVencimiento ? data.cudVencimiento.substring(0, 10) : '',
             educaciones: data.educaciones || [],
+            rubros: data.rubros || [],
             experienciasLaborales: (data.experienciasLaborales || []).map((exp: any) => ({
               ...exp,
               fechaInicio: exp.fechaInicio ? exp.fechaInicio.substring(0, 10) : '',
@@ -230,6 +260,21 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
 
   const handleRemoveSkill = (tagToRemove: string) => {
     setSkills(prev => prev.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleToggleRubro = (rubro: Rubro) => {
+    const currentRubros = formData.rubros || [];
+    const exists = currentRubros.some(r => r.id === rubro.id);
+    let updated: Rubro[];
+    if (exists) {
+      updated = currentRubros.filter(r => r.id !== rubro.id);
+    } else {
+      updated = [...currentRubros, rubro];
+    }
+    setFormData(prev => ({
+      ...prev,
+      rubros: updated
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -573,6 +618,92 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
           )}
         </div>
       </div>
+
+  {/* SECTION 1.5: RUBROS DE BÚSQUEDA */}
+  <div style={{
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    border: '1px solid hsl(var(--border))',
+    boxShadow: 'var(--shadow)',
+    padding: '32px',
+    marginBottom: '32px',
+    position: 'relative',
+    overflow: 'hidden'
+  }}>
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '6px',
+      background: 'linear-gradient(90deg, #10b981, #059669)'
+    }}></div>
+
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+      <div style={{ width: '8px', height: '24px', borderRadius: '4px', backgroundColor: '#10b981' }}></div>
+      <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rubros de Búsqueda</h3>
+    </div>
+
+    <p style={{ fontSize: '14px', color: 'hsl(var(--text-muted))', marginBottom: '20px' }}>
+      Selecciona las categorías laborales o rubros de interés para este postulante. Puedes seleccionar múltiples rubros.
+    </p>
+
+    {availableRubros.length === 0 ? (
+      <div style={{ color: 'hsl(var(--text-muted))', fontStyle: 'italic', fontSize: '14px' }}>
+        No hay rubros de búsqueda cargados en el sistema. Puedes agregarlos desde el listado principal.
+      </div>
+    ) : (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        {availableRubros.map((rubro) => {
+          const isSelected = (formData.rubros || []).some(r => r.id === rubro.id);
+          return (
+            <button
+              key={rubro.id}
+              type="button"
+              onClick={() => handleToggleRubro(rubro)}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '30px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                border: isSelected ? '1px solid #10b981' : '1px solid #e2e8f0',
+                backgroundColor: isSelected ? '#ecfdf5' : 'white',
+                color: isSelected ? '#047857' : '#64748b',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: isSelected ? '0 2px 4px rgba(16, 185, 129, 0.1)' : 'none',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#334155';
+                  e.currentTarget.style.backgroundColor = '#f8fafc';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.color = '#64748b';
+                  e.currentTarget.style.backgroundColor = 'white';
+                }
+              }}
+            >
+              <Plus size={14} style={{
+                transform: isSelected ? 'rotate(45deg)' : 'none',
+                transition: 'transform 0.2s ease',
+                color: isSelected ? '#10b981' : '#94a3b8'
+              }} />
+              {rubro.nombre}
+            </button>
+          );
+        })}
+      </div>
+    )}
+  </div>
 
       {/* SECTION 2: EXPERIENCIA LABORAL */}
       <div style={{

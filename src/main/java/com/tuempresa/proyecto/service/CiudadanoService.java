@@ -67,6 +67,16 @@ public class CiudadanoService {
         return ciudadanoRepository.buscarCiudadanosActivos(search.trim());
     }
 
+    public List<Ciudadano> buscarActivosConFiltro(String search, Integer rubroId) {
+        List<Ciudadano> lista = buscarActivos(search);
+        if (rubroId != null) {
+            return lista.stream()
+                .filter(c -> c.getRubros() != null && c.getRubros().stream().anyMatch(r -> r.getId().equals(rubroId)))
+                .toList();
+        }
+        return lista;
+    }
+
     public Optional<Ciudadano> obtenerPorId(Integer id) {
         return ciudadanoRepository.findById(id).filter(Ciudadano::getActivo);
     }

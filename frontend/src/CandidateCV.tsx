@@ -20,6 +20,12 @@ interface WorkExperience {
   tareasRealizadas: string;
 }
 
+interface Rubro {
+  id: number;
+  nombre: string;
+  activo?: boolean;
+}
+
 interface CandidateData {
   id: number;
   nombre: string;
@@ -44,6 +50,7 @@ interface CandidateData {
   habilidades: string;
   educaciones: Education[];
   experienciasLaborales: WorkExperience[];
+  rubros?: Rubro[];
 }
 
 interface CandidateCVProps {
@@ -266,6 +273,45 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                     }}
                   >
                     {skill}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* RUBROS DE INTERÉS */}
+          <div>
+            <h4 style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              borderBottom: '1px solid rgba(255,255,255,0.15)',
+              paddingBottom: '8px',
+              marginBottom: '16px',
+              color: '#00b4d8'
+            }}>Rubros de Interés</h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {!candidate.rubros || candidate.rubros.length === 0 ? (
+                <span style={{ fontSize: '13px', fontStyle: 'italic', opacity: 0.6 }}>No declarados</span>
+              ) : (
+                candidate.rubros.map((rubro) => (
+                  <div 
+                    key={rubro.id}
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {rubro.nombre}
                   </div>
                 ))
               )}

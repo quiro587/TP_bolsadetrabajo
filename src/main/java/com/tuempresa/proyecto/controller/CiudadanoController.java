@@ -17,8 +17,10 @@ public class CiudadanoController {
     private CiudadanoService ciudadanoService;
 
     @GetMapping
-    public ResponseEntity<List<Ciudadano>> listarActivos(@RequestParam(value = "buscar", required = false) String buscar) {
-        List<Ciudadano> ciudadanos = ciudadanoService.buscarActivos(buscar);
+    public ResponseEntity<List<Ciudadano>> listarActivos(
+            @RequestParam(value = "buscar", required = false) String buscar,
+            @RequestParam(value = "rubroId", required = false) Integer rubroId) {
+        List<Ciudadano> ciudadanos = ciudadanoService.buscarActivosConFiltro(buscar, rubroId);
         return ResponseEntity.ok(ciudadanos);
     }
 

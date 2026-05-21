@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Search, Eye, Edit2, Trash2, Loader2, AlertCircle, User } from 'lucide-react';
+import { Search, Eye, Edit2, Trash2, Loader2, AlertCircle, User, X, Briefcase } from 'lucide-react';
+
+interface Rubro {
+  id: number;
+  nombre: string;
+  activo: boolean;
+}
 
 interface Candidate {
   id: number;
@@ -9,6 +15,7 @@ interface Candidate {
   dni: string;
   estadoLaboral: string;
   fechaRegistro: string;
+  rubros?: Rubro[];
 }
 
 interface DashboardProps {
@@ -24,13 +31,41 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchCandidates = async (query = '') => {
+  const [rubros, setRubros] = useState<Rubro[]>([]);
+  const [selectedRubroId, setSelectedRubroId] = useState<number | null>(null);
+  const [showRubroModal, setShowRubroModal] = useState(false);
+  const [newRubroName, setNewRubroName] = useState('');
+  const [creatingRubro, setCreatingRubro] = useState(false);
+
+  const fetchRubros = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/rubros', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRubros(data);
+      }
+    } catch (err) {
+      console.error('Error fetching rubros:', err);
+    }
+  };
+
+  const fetchCandidates = async (query = '', rubroId: number | null = null) => {
     setLoading(true);
     setError('');
     try {
-      const url = query 
-        ? `http://localhost:8080/api/ciudadanos?buscar=${encodeURIComponent(query)}` 
-        : 'http://localhost:8080/api/ciudadanos';
+      const params = new URLSearchParams();
+      if (query.trim()) {
+        params.append('buscar', query.trim());
+      }
+      if (rubroId !== null) {
+        params.append('rubroId', rubroId.toString());
+      }
+      
+      const url = `http://localhost:8080/api/ciudadanos?${params.toString()}`;
 
       const response = await fetch(url, {
         headers: {
@@ -55,9 +90,40 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
     }
   };
 
+  const handleCreateRubro = async () => {
+    if (!newRubroName.trim()) return;
+    setCreatingRubro(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/rubros', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ nombre: newRubroName.trim() })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Error al guardar el rubro.');
+      }
+
+      setNewRubroName('');
+      await fetchRubros();
+    } catch (err: any) {
+      alert(err.message || 'Error al guardar el rubro.');
+    } finally {
+      setCreatingRubro(false);
+    }
+  };
+
   useEffect(() => {
-    fetchCandidates(search);
-  }, [search]);
+    fetchRubros();
+  }, []);
+
+  useEffect(() => {
+    fetchCandidates(search, selectedRubroId);
+  }, [search, selectedRubroId]);
 
   const handleDelete = async (id: number, name: string) => {
     if (!window.confirm(`¿Estás seguro de que deseas dar de baja al postulante ${name}?`)) {
@@ -171,24 +237,56 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
 
           <div style={{ width: '1px', height: '24px', backgroundColor: '#cbd5e1' }}></div>
 
-          <select
-            style={{
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '14px',
-              color: '#64748b',
-              cursor: 'pointer',
-              width: 'auto',
-              paddingRight: '24px'
-            }}
-            defaultValue="all"
-          >
-            <option value="all">Todas las categorías</option>
-            <option value="desempleado">Desempleado</option>
-            <option value="entrevista">Entrevista</option>
-            <option value="contratado">Contratado</option>
-            <option value="recibido">Recibido</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <select
+              value={selectedRubroId || 'all'}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedRubroId(val === 'all' ? null : Number(val));
+              }}
+              style={{
+                border: 'none',
+                backgroundColor: 'transparent',
+                fontSize: '14px',
+                color: '#64748b',
+                cursor: 'pointer',
+                width: 'auto',
+                paddingRight: '24px',
+                outline: 'none'
+              }}
+            >
+              <option value="all">Todos los rubros</option>
+              {rubros.map((rubro) => (
+                <option key={rubro.id} value={rubro.id}>
+                  {rubro.nombre}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => setShowRubroModal(true)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                color: '#475569',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'var(--transition)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e2e8f0'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+              title="Administrar Rubros de Búsqueda"
+            >
+              <Briefcase size={14} />
+              Rubros
+            </button>
+          </div>
         </div>
 
         <button 
@@ -284,6 +382,27 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
                           <div style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
                             {candidate.email || 'correo@sin-email.com'}
                           </div>
+                          {candidate.rubros && candidate.rubros.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                              {candidate.rubros.map((rubro) => (
+                                <span
+                                  key={rubro.id}
+                                  style={{
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    backgroundColor: 'hsl(var(--primary) / 0.08)',
+                                    color: 'hsl(var(--primary))',
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.2px'
+                                  }}
+                                >
+                                  {rubro.nombre}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -392,6 +511,155 @@ export default function Dashboard({ token, onNewCandidate, onEditCandidate, onVi
           </div>
         )}
       </div>
+
+      {/* Sleek Admin Rubros Modal */}
+      {showRubroModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            border: '1px solid hsl(var(--border))',
+            boxShadow: 'var(--shadow-lg)',
+            width: '100%',
+            maxWidth: '480px',
+            padding: '32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => {
+                setShowRubroModal(false);
+                setNewRubroName('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>Administrar Rubros de Búsqueda</h3>
+              <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                Agrega nuevos rubros o visualiza las categorías laborales actualmente activas en el sistema.
+              </p>
+            </div>
+
+            {/* List of existing Rubros */}
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Rubros Existentes ({rubros.length})
+              </label>
+              <div style={{
+                maxHeight: '180px',
+                overflowY: 'auto',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '8px',
+                marginTop: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+              }}>
+                {rubros.length === 0 ? (
+                  <span style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', padding: '8px' }}>
+                    No hay rubros creados.
+                  </span>
+                ) : (
+                  rubros.map(r => (
+                    <div
+                      key={r.id}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        color: '#334155',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <span style={{ fontWeight: 500 }}>{r.nombre}</span>
+                      <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, textTransform: 'uppercase' }}>
+                        Activo
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Form to add a new Rubro */}
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Nuevo Rubro de Búsqueda
+              </label>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="Ej: Sistemas, Administrativo..."
+                  value={newRubroName}
+                  onChange={(e) => setNewRubroName(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      await handleCreateRubro();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleCreateRubro}
+                  disabled={creatingRubro || !newRubroName.trim()}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: newRubroName.trim() ? '#3b82f6' : '#94a3b8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: newRubroName.trim() ? 'pointer' : 'default',
+                    transition: 'var(--transition)'
+                  }}
+                  onMouseEnter={(e) => { if (newRubroName.trim()) e.currentTarget.style.backgroundColor = '#2563eb' }}
+                  onMouseLeave={(e) => { if (newRubroName.trim()) e.currentTarget.style.backgroundColor = '#3b82f6' }}
+                >
+                  {creatingRubro ? 'Agregando...' : 'Agregar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

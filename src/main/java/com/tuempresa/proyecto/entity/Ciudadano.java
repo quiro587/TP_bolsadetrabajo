@@ -94,6 +94,14 @@ public class Ciudadano {
     @OneToMany(mappedBy = "ciudadano", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExperienciaLaboral> experienciasLaborales = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "ciudadano_rubros",
+        joinColumns = @JoinColumn(name = "id_ciudadano"),
+        inverseJoinColumns = @JoinColumn(name = "id_rubro")
+    )
+    private List<Rubro> rubros = new ArrayList<>();
+
     // --- CONSTRUCTORES ---
     public Ciudadano() {}
 
@@ -202,4 +210,7 @@ public class Ciudadano {
 
     public List<ExperienciaLaboral> getExperienciasLaborales() { return experienciasLaborales; }
     public void setExperienciasLaborales(List<ExperienciaLaboral> experienciasLaborales) { this.experienciasLaborales = experienciasLaborales; }
+
+    public List<Rubro> getRubros() { return rubros; }
+    public void setRubros(List<Rubro> rubros) { this.rubros = rubros; }
 }
