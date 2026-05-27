@@ -7,8 +7,7 @@ target/
 .project
 .settings/
 .idea/
-*.iml
-application.properties
+
 
 ### STS ###
 .apt_generated
