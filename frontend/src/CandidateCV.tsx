@@ -284,28 +284,22 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
               </h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px', color: '#475569' }}>
-                {candidate.direccion && (
-                  <div style={{ textAlign: 'center' }}>
-                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dirección</span>
-                    <span>{candidate.direccion}</span>
-                    {candidate.puntosReferenciaDomicilio && (
-                      <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', marginTop: '2px' }}>
-                        Ref: {candidate.puntosReferenciaDomicilio}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {candidate.telefonoPrimario && (
-                  <div style={{ textAlign: 'center' }}>
-                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Teléfono</span>
-                    <span>{candidate.telefonoPrimario}</span>
-                    {candidate.telefonoSecundario && <span style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Sec: {candidate.telefonoSecundario}</span>}
-                  </div>
-                )}
                 {candidate.email && (
                   <div style={{ textAlign: 'center', wordBreak: 'break-all' }}>
                     <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</span>
                     <span>{candidate.email}</span>
+                  </div>
+                )}
+                {candidate.telefonoSecundario && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Teléfono Secundario</span>
+                    <span>{candidate.telefonoSecundario}</span>
+                  </div>
+                )}
+                {candidate.puntosReferenciaDomicilio && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ref. Dirección</span>
+                    <span>{candidate.puntosReferenciaDomicilio}</span>
                   </div>
                 )}
                 {candidate.fechaNacimiento && (
@@ -322,13 +316,19 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Datos Personales</span>
                   <span>Género: {candidate.genero}</span>
-                  <span style={{ display: 'block' }}>E. Civil: {candidate.estadoCivil}</span>
+                  <span style={{ display: 'block' }}>E. Civil: {candidate.estadoCivil || 'No especificado'}</span>
                   <span style={{ display: 'block' }}>Hijos a cargo: {candidate.hijosACargo || 0}</span>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Licencia y Movilidad</span>
                   <span>Movilidad propia: {candidate.movilidadPropia ? 'Sí' : 'No'}</span>
-                  <span style={{ display: 'block' }}>Licencia: {candidate.licenciaConducir || 'NO POSEE'}</span>
+                  <span style={{ display: 'block' }}>
+                    Licencia: {
+                      !candidate.licenciaConducir || candidate.licenciaConducir === 'NO_POSEE'
+                        ? 'No posee'
+                        : candidate.licenciaConducir
+                    }
+                  </span>
                 </div>
                 {(candidate.tieneObraSocial || candidate.planSocialActivo) && (
                   <div style={{ textAlign: 'center' }}>
