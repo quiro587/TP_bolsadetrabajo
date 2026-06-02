@@ -365,19 +365,16 @@ input::placeholder {
     display: block !important;
     min-height: auto !important;
     background-color: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   .cv-print-layout {
-    display: grid !important;
-    grid-template-columns: 280px 1fr !important;
-    gap: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
+    display: block !important;
     box-shadow: none !important;
-  }
-  .cv-sidebar {
-    background-color: #0d3b66 !important;
-    color: white !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
   }
 }

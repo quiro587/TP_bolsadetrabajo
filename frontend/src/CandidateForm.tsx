@@ -61,6 +61,7 @@ interface CandidateData {
   situacionRegistroEspecifico?: string;
   tieneObraSocial: boolean;
   planSocialActivo?: string;
+  foto?: string;
 }
 
 interface CandidateFormProps {
@@ -102,11 +103,13 @@ const emptyForm: CandidateData = {
   situacionHabilitacionMunicipal: false,
   situacionRegistroEspecifico: '',
   tieneObraSocial: false,
-  planSocialActivo: ''
+  planSocialActivo: '',
+  foto: ''
 };
 
 export default function CandidateForm({ token, candidateId, onBack, onSaveSuccess }: CandidateFormProps) {
   const [formData, setFormData] = useState<CandidateData>(emptyForm);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -200,6 +203,48 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            setFormData(prev => ({ ...prev, foto: compressedBase64 }));
+          } else {
+            setFormData(prev => ({ ...prev, foto: event.target?.result as string }));
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -414,6 +459,82 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
+          {/* Foto Preview & Upload */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '8px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '12px',
+                backgroundColor: '#e2e8f0',
+                border: '2px dashed #cbd5e1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flexShrink: 0,
+                cursor: 'pointer'
+              }}
+              title="Haga clic para seleccionar una foto"
+            >
+              {formData.foto ? (
+                <img src={formData.foto} alt="Vista previa de foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', padding: '4px' }}>Sin Foto</span>
+              )}
+            </div>
+            <div>
+              <span style={{ display: 'block', fontSize: '14px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>Fotografía del Postulante</span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '8px 14px',
+                    backgroundColor: '#eff6ff',
+                    color: '#2563eb',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border: '1px solid #bfdbfe'
+                  }}
+                >
+                  Seleccionar Imagen
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  accept="image/*" 
+                  onChange={handlePhotoChange} 
+                  style={{ display: 'none' }} 
+                />
+                {formData.foto && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, foto: '' }))}
+                    style={{
+                      padding: '8px 14px',
+                      backgroundColor: '#fef2f2',
+                      color: '#ef4444',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: '1px solid #fca5a5'
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                )}
+              </div>
+              <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>Esta imagen aparecerá en el currículum impreso (se recomiendan formatos cuadrados).</p>
+            </div>
+          </div>
+
           {/* Form grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
             <div className="form-group">
