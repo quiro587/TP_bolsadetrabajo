@@ -439,29 +439,30 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
             gap: '36px'
           }}>
             {/* PERFIL */}
-            <div>
-              <h4 style={{
-                fontSize: '13px',
-                fontWeight: 800,
-                letterSpacing: '1.5px',
-                color: '#0f172a',
-                textTransform: 'uppercase',
-                marginBottom: '12px'
-              }}>
-                PERFIL
-              </h4>
-              <div style={{
-                borderLeft: '2px solid #cbd5e1',
-                paddingLeft: '16px',
-                fontSize: '13px',
-                color: '#475569',
-                lineHeight: 1.6,
-                textAlign: 'justify'
-              }}>
-                {(candidate.observacionesGenerales ? candidate.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '') : null) || 
-                  'Postulante comprometido, con vocación de servicio y orientación a resultados. Interesado en incorporarse a un equipo de trabajo profesional para aportar su experiencia y continuar con su desarrollo laboral y académico.'}
+            {candidate.observacionesGenerales && candidate.observacionesGenerales.trim() && (
+              <div>
+                <h4 style={{
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  letterSpacing: '1.5px',
+                  color: '#0f172a',
+                  textTransform: 'uppercase',
+                  marginBottom: '12px'
+                }}>
+                  PERFIL
+                </h4>
+                <div style={{
+                  borderLeft: '2px solid #cbd5e1',
+                  paddingLeft: '16px',
+                  fontSize: '13px',
+                  color: '#475569',
+                  lineHeight: 1.6,
+                  textAlign: 'justify'
+                }}>
+                  {candidate.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '')}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* EXPERIENCIA LABORAL */}
             <div>
