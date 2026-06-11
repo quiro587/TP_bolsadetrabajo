@@ -192,6 +192,81 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
 
   const handleSave = async () => {
     if (!editData) return;
+
+    // 1. Campos obligatorios
+    if (!editData.nombre.trim() || !editData.apellido.trim() || !editData.dni.trim() || !editData.cuil.trim() || !editData.fechaNacimiento || !editData.telefonoPrimario.trim()) {
+      window.showToast('Por favor, completa los campos requeridos (*).', 'error');
+      return;
+    }
+
+    // 2. Validar DNI
+    const cleanDni = editData.dni.replace(/\D/g, '');
+    if (cleanDni.length < 7 || cleanDni.length > 8) {
+      window.showToast('El DNI debe tener 7 u 8 dígitos.', 'error');
+      return;
+    }
+
+    // 3. Validar CUIL
+    const cleanCuil = editData.cuil.replace(/\D/g, '');
+    if (cleanCuil.length !== 11) {
+      window.showToast('El CUIL debe tener exactamente 11 dígitos.', 'error');
+      return;
+    }
+
+    // 4. Validar correlación DNI / CUIL
+    if (!cleanCuil.includes(cleanDni)) {
+      window.showToast('El CUIL no coincide con el DNI ingresado (el DNI debe estar contenido dentro del CUIL).', 'error');
+      return;
+    }
+
+    // 5. Validar fecha de nacimiento
+    const birthDate = new Date(editData.fechaNacimiento);
+    const today = new Date();
+    if (isNaN(birthDate.getTime())) {
+      window.showToast('La fecha de nacimiento no es válida.', 'error');
+      return;
+    }
+    if (birthDate > today) {
+      window.showToast('La fecha de nacimiento no puede ser en el futuro.', 'error');
+      return;
+    }
+    const age = today.getFullYear() - birthDate.getFullYear();
+    if (age < 14 || age > 100) {
+      window.showToast('La edad del postulante debe estar entre 14 y 100 años.', 'error');
+      return;
+    }
+
+    // 6. Validar fechas de experiencia laboral
+    for (const exp of editData.experienciasLaborales) {
+      if (!exp.empresa.trim() || !exp.puesto.trim()) {
+        window.showToast('Por favor, completa la empresa y puesto de todas las experiencias laborales.', 'error');
+        return;
+      }
+      if (exp.fechaInicio && exp.fechaFin && !exp.currentlyWorking) {
+        const startYear = parseInt(exp.fechaInicio.substring(0, 4), 10);
+        const endYear = parseInt(exp.fechaFin.substring(0, 4), 10);
+        if (!isNaN(startYear) && !isNaN(endYear) && startYear > endYear) {
+          window.showToast(`En la experiencia laboral (${exp.empresa}), el año de inicio no puede ser posterior al de fin.`, 'error');
+          return;
+        }
+      }
+    }
+
+    // 7. Validar educación
+    for (const edu of editData.educaciones) {
+      if (!edu.institucion.trim() || !edu.nivelAlcanzado) {
+        window.showToast('Por favor, completa la institución y nivel de todos los estudios.', 'error');
+        return;
+      }
+      if (edu.anioUltimoAprobado) {
+        const currentYear = new Date().getFullYear();
+        if (edu.anioUltimoAprobado < 1940 || edu.anioUltimoAprobado > currentYear + 10) {
+          window.showToast(`El año de egreso o último aprobado (${edu.anioUltimoAprobado}) no es válido.`, 'error');
+          return;
+        }
+      }
+    }
+
     setSaving(true);
     try {
       const cleanData = {

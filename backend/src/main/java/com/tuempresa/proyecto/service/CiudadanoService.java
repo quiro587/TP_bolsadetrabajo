@@ -36,12 +36,82 @@ public class CiudadanoService {
 
     @Transactional
     public Ciudadano guardarCiudadano(Ciudadano ciudadano) throws Exception {
+        // Validar obligatoriedad y formato de DNI
+        if (ciudadano.getDni() == null || ciudadano.getDni().trim().isEmpty()) {
+            throw new Exception("El DNI es obligatorio.");
+        }
+        String cleanDni = ciudadano.getDni().replaceAll("\\D", "");
+        if (cleanDni.length() < 7 || cleanDni.length() > 8) {
+            throw new Exception("El DNI debe tener entre 7 y 8 dígitos numéricos.");
+        }
+
+        // Validar obligatoriedad y formato de CUIL
+        if (ciudadano.getCuil() == null || ciudadano.getCuil().trim().isEmpty()) {
+            throw new Exception("El CUIL es obligatorio.");
+        }
+        String cleanCuil = ciudadano.getCuil().replaceAll("\\D", "");
+        if (cleanCuil.length() != 11) {
+            throw new Exception("El CUIL debe tener exactamente 11 dígitos numéricos.");
+        }
+
         // Validar correlación entre DNI y CUIL
-        if (ciudadano.getDni() != null && ciudadano.getCuil() != null) {
-            String cleanDni = ciudadano.getDni().replaceAll("\\D", "");
-            String cleanCuil = ciudadano.getCuil().replaceAll("\\D", "");
-            if (!cleanCuil.contains(cleanDni)) {
-                throw new Exception("El CUIL no es válido para el DNI ingresado (el DNI debe estar contenido en el CUIL).");
+        if (!cleanCuil.contains(cleanDni)) {
+            throw new Exception("El CUIL no es válido para el DNI ingresado (el DNI debe estar contenido en el CUIL).");
+        }
+
+        // Validar Fecha de Nacimiento
+        if (ciudadano.getFechaNacimiento() == null) {
+            throw new Exception("La fecha de nacimiento es obligatoria.");
+        }
+        if (ciudadano.getFechaNacimiento().isAfter(java.time.LocalDate.now())) {
+            throw new Exception("La fecha de nacimiento no puede ser en el futuro.");
+        }
+        java.time.LocalDate minAge = java.time.LocalDate.now().minusYears(14);
+        java.time.LocalDate maxAge = java.time.LocalDate.now().minusYears(100);
+        if (ciudadano.getFechaNacimiento().isAfter(minAge)) {
+            throw new Exception("El postulante debe ser mayor de 14 años.");
+        }
+        if (ciudadano.getFechaNacimiento().isBefore(maxAge)) {
+            throw new Exception("La fecha de nacimiento no es válida.");
+        }
+
+        // Validar obligatoriedad del teléfono primario
+        if (ciudadano.getTelefonoPrimario() == null || ciudadano.getTelefonoPrimario().trim().isEmpty()) {
+            throw new Exception("El teléfono principal es obligatorio.");
+        }
+
+        // Validar Fechas de Experiencia Laboral
+        if (ciudadano.getExperienciasLaborales() != null) {
+            for (com.tuempresa.proyecto.entity.ExperienciaLaboral exp : ciudadano.getExperienciasLaborales()) {
+                if (exp.getEmpresa() == null || exp.getEmpresa().trim().isEmpty()) {
+                    throw new Exception("La empresa es obligatoria en todas las experiencias laborales.");
+                }
+                if (exp.getPuesto() == null || exp.getPuesto().trim().isEmpty()) {
+                    throw new Exception("El puesto es obligatorio en todas las experiencias laborales.");
+                }
+                if (exp.getFechaInicio() != null && exp.getFechaFin() != null && (exp.getCurrentlyWorking() == null || !exp.getCurrentlyWorking())) {
+                    if (exp.getFechaInicio().isAfter(exp.getFechaFin())) {
+                        throw new Exception("En la experiencia laboral (" + exp.getEmpresa() + "), la fecha de inicio no puede ser posterior a la fecha de fin.");
+                    }
+                }
+            }
+        }
+
+        // Validar Educación
+        if (ciudadano.getEducaciones() != null) {
+            for (com.tuempresa.proyecto.entity.Educacion edu : ciudadano.getEducaciones()) {
+                if (edu.getInstitucion() == null || edu.getInstitucion().trim().isEmpty()) {
+                    throw new Exception("La institución es obligatoria en todos los estudios.");
+                }
+                if (edu.getNivelAlcanzado() == null || edu.getNivelAlcanzado().trim().isEmpty()) {
+                    throw new Exception("El nivel alcanzado es obligatorio en todos los estudios.");
+                }
+                if (edu.getAnioUltimoAprobado() != null) {
+                    int currentYear = java.time.LocalDate.now().getYear();
+                    if (edu.getAnioUltimoAprobado() < 1940 || edu.getAnioUltimoAprobado() > currentYear + 10) {
+                        throw new Exception("El año de egreso o último aprobado (" + edu.getAnioUltimoAprobado() + ") no es válido.");
+                    }
+                }
             }
         }
 
