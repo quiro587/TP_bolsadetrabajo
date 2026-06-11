@@ -407,11 +407,9 @@ export default function App() {
 
       {/* Main Content Area */}
       <div className="main-content">
-        {/* Top Header (no-print) */}
         <header className="top-header no-print">
           <div className="header-user">
             <span className="user-name">{userDisplayName || 'Usuario'}</span>
-            <div className="user-avatar">{getInitials(userDisplayName || 'U')}</div>
             <button 
               onClick={handleLogout} 
               className="logout-btn"
