@@ -145,7 +145,9 @@ def main():
     print(f" - {len(personal_db)} Personal")
     print(f" - {len(inserted_dnis)} Citizens in DB")
 
-    csv_file = 'Entrevistas Final (2024, 2025, 2026) - Respuestas de formulario 1.csv'
+    import os
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_file = os.path.join(script_dir, 'Entrevistas Final (2024, 2025, 2026) - Respuestas de formulario 1.csv')
     
     # Pre-scan CSV to insert missing Barrios, Rubros, and Personal
     print("\n[STEP 1] Scanning CSV for master data (Barrios, Rubros, Interviewers)...")
