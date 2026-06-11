@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { 
-  ArrowLeft, Printer, MapPin, User, Edit, Save, X, Plus, Trash2, 
+  ArrowLeft, Printer, User, Edit, Save, X, Plus, Trash2, 
   ChevronDown, ChevronUp, Image as ImageIcon, Sparkles, Download
 } from 'lucide-react';
 
@@ -141,7 +141,6 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
     if (!editData) return;
     setSaving(true);
     try {
-      // Clean up fields to match backend expectations
       const cleanData = {
         ...editData,
         experienciasLaborales: editData.experienciasLaborales.map(exp => ({
@@ -190,15 +189,18 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
 
   const formatYearRange = (exp: WorkExperience) => {
     if (exp.currentlyWorking) {
-      return '2020 - ACTUALIDAD';
+      return 'Presente';
     }
     const start = exp.fechaInicio ? exp.fechaInicio.substring(0, 4) : '';
     const end = exp.fechaFin ? exp.fechaFin.substring(0, 4) : '';
-    return start || end ? `${start} - ${end}` : 'S/F';
+    return start || end ? `${start} – ${end}` : '';
   };
 
   const formatEduYear = (edu: Education) => {
-    return edu.anioUltimoAprobado || (edu.finalizado ? 'EGRESADO' : 'CURSANDO');
+    if (edu.finalizado) {
+      return edu.anioUltimoAprobado || 'Egreso';
+    }
+    return edu.anioUltimoAprobado ? `Cursando (${edu.anioUltimoAprobado})` : 'Cursando';
   };
 
   // Photo helpers
@@ -371,6 +373,45 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
     setExpandedSection(expandedSection === section ? null : section);
   };
 
+  // Smart Skills Renderer (handles categories like Languages: Java, Frameworks: React, or general skills)
+  const renderSkills = (data: CandidateData) => {
+    const skills = getSkillsArray(data);
+    if (skills.length === 0) return null;
+    
+    // Group by category (before ':')
+    const categorized: { [key: string]: string[] } = {};
+    const uncategorized: string[] = [];
+    
+    skills.forEach(skill => {
+      if (skill.includes(':')) {
+        const parts = skill.split(':');
+        const category = parts[0].trim();
+        const value = parts.slice(1).join(':').trim();
+        if (!categorized[category]) {
+          categorized[category] = [];
+        }
+        categorized[category].push(value);
+      } else {
+        uncategorized.push(skill);
+      }
+    });
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#1e293b', lineHeight: 1.6 }}>
+        {Object.entries(categorized).map(([category, values], idx) => (
+          <div key={idx}>
+            <strong style={{ color: '#0f172a' }}>{category}:</strong> {values.join(', ')}
+          </div>
+        ))}
+        {uncategorized.length > 0 && (
+          <div>
+            <strong style={{ color: '#0f172a' }}>Habilidades / Competencias:</strong> {uncategorized.join(', ')}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading || !candidate) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '16px' }}>
@@ -382,431 +423,225 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
 
   const displayData = isEditing ? (editData || candidate) : candidate;
 
-  // Render CV Sheet layout (reused in both modes)
+  // Render CV Sheet layout (Single column template matching the user's mockup)
   const renderCVSheet = () => (
     <div className="cv-print-layout" style={{
       backgroundColor: 'white',
-      borderRadius: '16px',
-      boxShadow: isEditing ? '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)' : 'var(--shadow-lg)',
+      borderRadius: isEditing ? '8px' : '24px',
+      boxShadow: isEditing ? '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)' : 'var(--shadow-lg)',
       overflow: 'hidden',
       minHeight: '1050px',
       border: '1px solid hsl(var(--border))',
-      padding: '48px 40px',
-      fontFamily: "'Outfit', 'Inter', sans-serif",
+      padding: '56px 48px',
+      fontFamily: "'Inter', 'Outfit', sans-serif",
       position: 'relative',
       width: '100%',
       boxSizing: 'border-box'
     }}>
       {/* SJ Ciudad Logo Top Right */}
-      <div style={{ position: 'absolute', top: '40px', right: '40px', fontSize: '16px', fontWeight: 800 }}>
+      <div className="no-print" style={{ position: 'absolute', top: '48px', right: '48px', fontSize: '16px', fontWeight: 800 }}>
         <span style={{ color: '#00b4d8' }}>SJ</span> Ciudad
       </div>
 
-      {/* HEADER SECTION (Centered Name & Photo) */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '32px' }}>
+      {/* HEADER SECTION (Photo left, Text content right) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '28px', marginBottom: '28px' }}>
         {/* Profile Photo */}
         <div style={{
-          width: '100px',
-          height: '100px',
-          borderRadius: '16px',
+          width: '90px',
+          height: '90px',
+          borderRadius: '50%',
           overflow: 'hidden',
           backgroundColor: '#f1f5f9',
-          border: '2px solid #e2e8f0',
-          marginBottom: '16px',
+          border: '1px solid #cbd5e1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+          flexShrink: 0
         }}>
           {displayData.foto ? (
             <img src={displayData.foto} alt={`${displayData.nombre} ${displayData.apellido}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <User size={48} style={{ color: '#cbd5e1' }} />
+            <User size={40} style={{ color: '#cbd5e1' }} />
           )}
         </div>
 
-        {/* Full Name */}
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: 800,
-          color: '#0f172a',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-          margin: 0
-        }}>
-          {displayData.nombre} {displayData.apellido}
-        </h1>
+        {/* Name and Contact Info */}
+        <div style={{ flex: 1 }}>
+          <h1 style={{
+            fontSize: '24px',
+            color: '#0f172a',
+            margin: 0,
+            lineHeight: 1.2
+          }}>
+            <span style={{ fontWeight: 400 }}>{displayData.nombre} </span>
+            <span style={{ fontWeight: 700 }}>{displayData.apellido}</span>
+          </h1>
+          
+          <div style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563', marginTop: '4px' }}>
+            {displayData.cvUrl || 'Postulante'}
+          </div>
 
-        {/* Subtitle Details */}
-        <div style={{
-          fontSize: '13px',
-          color: '#64748b',
-          fontWeight: 600,
-          marginTop: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}>
-          <span>{displayData.cvUrl || 'Postulante'}</span>
-          <span style={{ color: '#cbd5e1' }}>|</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <MapPin size={13} />
-            {displayData.direccion || 'San José, Entre Ríos'}
-          </span>
-          <span style={{ color: '#cbd5e1' }}>|</span>
-          <span>{displayData.telefonoPrimario}</span>
+          <div style={{
+            fontSize: '11px',
+            color: '#6b7280',
+            marginTop: '6px',
+            lineHeight: 1.5,
+            fontWeight: 500
+          }}>
+            {(() => {
+              const parts = [];
+              if (displayData.email) parts.push(displayData.email);
+              if (displayData.telefonoPrimario) parts.push(displayData.telefonoPrimario);
+              if (displayData.direccion) {
+                let addr = displayData.direccion;
+                if (displayData.puntosReferenciaDomicilio) {
+                  addr += ` (${displayData.puntosReferenciaDomicilio})`;
+                }
+                parts.push(addr);
+              }
+              return parts.join(' | ');
+            })()}
+          </div>
         </div>
       </div>
 
-      {/* TWO-COLUMN GRID LAYOUT */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '250px 1fr',
-        gap: '32px',
-        borderTop: '1px solid #e2e8f0',
-        paddingTop: '24px'
-      }}>
-        {/* LEFT Narrow Column (Details & Competencies) */}
-        <div style={{
-          borderRight: '1px solid #e2e8f0',
-          paddingRight: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '28px'
-        }}>
-          {/* DETALLES */}
+      {/* SINGLE-COLUMN LAYOUT BODY */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        
+        {/* PERFIL */}
+        {displayData.observacionesGenerales && displayData.observacionesGenerales.trim() && (
           <div>
-            <h4 style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              color: '#475569',
-              textAlign: 'center',
-              marginBottom: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}>
-              <span style={{ fontSize: '9px', color: '#94a3b8' }}>o</span> DETALLES <span style={{ fontSize: '9px', color: '#94a3b8' }}>o</span>
-            </h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12px', color: '#475569' }}>
-              {displayData.email && (
-                <div style={{ textAlign: 'center', wordBreak: 'break-all' }}>
-                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</span>
-                  <span>{displayData.email}</span>
-                </div>
-              )}
-              {displayData.telefonoSecundario && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Teléfono Secundario</span>
-                  <span>{displayData.telefonoSecundario}</span>
-                </div>
-              )}
-              {displayData.puntosReferenciaDomicilio && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ref. Dirección</span>
-                  <span>{displayData.puntosReferenciaDomicilio}</span>
-                </div>
-              )}
-              {displayData.fechaNacimiento && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fecha de Nacimiento</span>
-                  <span>{displayData.fechaNacimiento.substring(0, 10).split('-').reverse().join('/')}</span>
-                </div>
-              )}
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Documentos</span>
-                <span>DNI: {displayData.dni}</span>
-                {displayData.cuil && <span style={{ display: 'block', fontSize: '11px' }}>CUIL: {displayData.cuil}</span>}
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Datos Personales</span>
-                <span>Género: {displayData.genero}</span>
-                <span style={{ display: 'block' }}>E. Civil: {displayData.estadoCivil || 'No especificado'}</span>
-                <span style={{ display: 'block' }}>Hijos a cargo: {displayData.hijosACargo || 0}</span>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Licencia y Movilidad</span>
-                <span>Movilidad propia: {displayData.movilidadPropia ? 'Sí' : 'No'}</span>
-                <span style={{ display: 'block' }}>
-                  Licencia: {
-                    !displayData.licenciaConducir || displayData.licenciaConducir === 'NO_POSEE'
-                      ? 'No posee'
-                      : displayData.licenciaConducir
-                  }
-                </span>
-              </div>
-              {(displayData.tieneObraSocial || displayData.planSocialActivo) && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Seguridad Social</span>
-                  <span>Obra social: {displayData.tieneObraSocial ? 'Sí posee' : 'No posee'}</span>
-                  {displayData.planSocialActivo && <span style={{ display: 'block' }}>Plan: {displayData.planSocialActivo}</span>}
-                </div>
-              )}
-              {(displayData.situacionMonotributo || displayData.situacionResponsableInscripto || displayData.situacionAter || displayData.situacionHabilitacionMunicipal || displayData.situacionRegistroEspecifico) && (
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Habilitaciones</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px', fontSize: '10px' }}>
-                    {displayData.situacionMonotributo && <span>• Monotributista</span>}
-                    {displayData.situacionResponsableInscripto && <span>• Responsable Inscripto</span>}
-                    {displayData.situacionAter && <span>• Registro ATER</span>}
-                    {displayData.situacionHabilitacionMunicipal && <span>• Habilitación Municipal</span>}
-                    {displayData.situacionRegistroEspecifico && <span>• {displayData.situacionRegistroEspecifico}</span>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* COMPETENCIAS */}
-          {getSkillsArray(displayData).length > 0 && (
-            <div>
-              <h4 style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                color: '#475569',
-                textAlign: 'center',
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}>
-                <span style={{ fontSize: '9px', color: '#94a3b8' }}>o</span> COMPETENCIAS <span style={{ fontSize: '9px', color: '#94a3b8' }}>o</span>
-              </h4>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {getSkillsArray(displayData).map((skill, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      textAlign: 'center',
-                      padding: '6px 0',
-                      borderBottom: '1px solid #cbd5e1',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#475569',
-                      textTransform: 'capitalize'
-                    }}
-                  >
-                    {skill}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* RUBROS DE INTERÉS */}
-          {displayData.rubros && displayData.rubros.length > 0 && (
-            <div>
-              <h4 style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                color: '#475569',
-                textAlign: 'center',
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}>
-                <span style={{ fontSize: '9px', color: '#94a3b8' }}>o</span> INTERESES <span style={{ fontSize: '9px', color: '#94a3b8' }}>o</span>
-              </h4>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {displayData.rubros.map((rubro) => (
-                  <div
-                    key={rubro.id}
-                    style={{
-                      textAlign: 'center',
-                      padding: '6px 0',
-                      borderBottom: '1px solid #e2e8f0',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: '#64748b'
-                    }}
-                  >
-                    {rubro.nombre}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT Wide Column (Profile & Timelines) */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '28px'
-        }}>
-          {/* PERFIL */}
-          {displayData.observacionesGenerales && displayData.observacionesGenerales.trim() && (
-            <div>
-              <h4 style={{
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '1.5px',
-                color: '#0f172a',
-                textTransform: 'uppercase',
-                marginBottom: '10px'
-              }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
                 PERFIL
               </h4>
-              <div style={{
-                borderLeft: '2px solid #cbd5e1',
-                paddingLeft: '14px',
-                fontSize: '13px',
-                color: '#475569',
-                lineHeight: 1.5,
-                textAlign: 'justify'
-              }}>
-                {displayData.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '')}
-              </div>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
             </div>
-          )}
-
-          {/* EXPERIENCIA LABORAL */}
-          <div>
-            <h4 style={{
-              fontSize: '12px',
-              fontWeight: 800,
-              letterSpacing: '1.5px',
-              color: '#0f172a',
-              textTransform: 'uppercase',
-              marginBottom: '16px'
-            }}>
-              EXPERIENCIA LABORAL
-            </h4>
-
-            {displayData.experienciasLaborales.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', marginLeft: '8px' }}>Sin experiencia laboral previa registrada.</p>
-            ) : (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '18px',
-                borderLeft: '2px solid #e2e8f0',
-                paddingLeft: '20px',
-                marginLeft: '6px'
-              }}>
-                {displayData.experienciasLaborales.map((exp, idx) => (
-                  <div key={idx} style={{ position: 'relative' }}>
-                    {/* Circle Timeline Bullet */}
-                    <div style={{
-                      position: 'absolute',
-                      left: '-27px',
-                      top: '4px',
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                      border: '2px solid #475569',
-                      boxShadow: '0 0 0 3px white'
-                    }}></div>
-
-                    {/* Header details */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase' }}>
-                        {exp.puesto}
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
-                        {formatYearRange(exp)}
-                      </span>
-                    </div>
-
-                    {/* Subtitle details */}
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', marginTop: '1px' }}>
-                      {exp.empresa}
-                    </div>
-
-                    {/* Job tasks / description */}
-                    {exp.tareasRealizadas && (
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#64748b',
-                        marginTop: '6px',
-                        lineHeight: 1.5,
-                        textAlign: 'justify',
-                        whiteSpace: 'pre-wrap'
-                      }}>
-                        {exp.tareasRealizadas}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <p style={{ fontSize: '12px', color: '#4b5563', lineHeight: 1.6, textAlign: 'justify', margin: 0 }}>
+              {displayData.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '')}
+            </p>
           </div>
+        )}
 
-          {/* EDUCACIÓN */}
+        {/* SKILLS / COMPETENCIAS */}
+        {getSkillsArray(displayData).length > 0 && (
           <div>
-            <h4 style={{
-              fontSize: '12px',
-              fontWeight: 800,
-              letterSpacing: '1.5px',
-              color: '#0f172a',
-              textTransform: 'uppercase',
-              marginBottom: '16px'
-            }}>
-              EDUCACIÓN
-            </h4>
-
-            {displayData.educaciones.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', marginLeft: '8px' }}>Sin registros de formación académica.</p>
-            ) : (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                borderLeft: '2px solid #e2e8f0',
-                paddingLeft: '20px',
-                marginLeft: '6px'
-              }}>
-                {displayData.educaciones.map((edu, idx) => (
-                  <div key={idx} style={{ position: 'relative' }}>
-                    {/* Circle Timeline Bullet */}
-                    <div style={{
-                      position: 'absolute',
-                      left: '-27px',
-                      top: '4px',
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                      border: '2px solid #475569',
-                      boxShadow: '0 0 0 3px white'
-                    }}></div>
-
-                    {/* Header details */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase' }}>
-                        {edu.tituloObtenido || edu.nivelAlcanzado}
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
-                        {formatEduYear(edu)}
-                      </span>
-                    </div>
-
-                    {/* Subtitle details */}
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', marginTop: '1px' }}>
-                      {edu.institucion} {edu.finalizado ? '' : '(Cursando)'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                SKILLS
+              </h4>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
+            </div>
+            {renderSkills(displayData)}
           </div>
-        </div>
+        )}
+
+        {/* EXPERIENCIA LABORAL */}
+        {displayData.experienciasLaborales.length > 0 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                EXPERIENCE
+              </h4>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {displayData.experienciasLaborales.map((exp, idx) => (
+                <div key={idx}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{exp.empresa}</span>
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{formatYearRange(exp)}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#4b5563', marginTop: '1px' }}>{exp.puesto}</div>
+                  {exp.tareasRealizadas && (
+                    <ul style={{ paddingLeft: '16px', margin: '4px 0 0 0', fontSize: '12px', color: '#4b5563', lineHeight: 1.5 }}>
+                      {exp.tareasRealizadas.split('\n').map(s => s.trim()).filter(Boolean).map((task, tidx) => {
+                        const cleanTask = task.replace(/^[•\-\*\s]+/, '');
+                        return <li key={tidx} style={{ marginBottom: '2px' }}>{cleanTask}</li>;
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* EDUCACIÓN */}
+        {displayData.educaciones.length > 0 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                EDUCATION
+              </h4>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {displayData.educaciones.map((edu, idx) => (
+                <div key={idx}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{edu.institucion}</span>
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{formatEduYear(edu)}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#4b5563', marginTop: '1px' }}>
+                    {edu.tituloObtenido || edu.nivelAlcanzado} {edu.finalizado ? '' : '(Incompleto / Cursando)'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* INTERESES / RUBROS */}
+        {displayData.rubros && displayData.rubros.length > 0 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                INTERESES
+              </h4>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
+            </div>
+            <div style={{ fontSize: '12px', color: '#4b5563', lineHeight: 1.5 }}>
+              {displayData.rubros.map(r => r.nombre).join('  ·  ')}
+            </div>
+          </div>
+        )}
+
+        {/* INFORMACIÓN ADICIONAL */}
+        {(() => {
+          const hasAdditional = displayData.movilidadPropia || 
+                                (displayData.licenciaConducir && displayData.licenciaConducir !== 'NO_POSEE') || 
+                                displayData.cudDiscapacidad || 
+                                displayData.tieneObraSocial || 
+                                displayData.planSocialActivo ||
+                                displayData.estadoCivil ||
+                                displayData.hijosACargo > 0;
+          if (!hasAdditional) return null;
+          
+          const details = [];
+          if (displayData.estadoCivil) details.push(`Estado Civil: ${displayData.estadoCivil}`);
+          if (displayData.hijosACargo > 0) details.push(`Hijos a cargo: ${displayData.hijosACargo}`);
+          if (displayData.movilidadPropia) details.push(`Movilidad propia: Sí`);
+          if (displayData.licenciaConducir && displayData.licenciaConducir !== 'NO_POSEE') details.push(`Licencia: ${displayData.licenciaConducir}`);
+          if (displayData.cudDiscapacidad) details.push(`CUD Discapacidad: ${displayData.tipoDiscapacidad || 'Sí'}`);
+          if (displayData.tieneObraSocial) details.push(`Obra Social: Sí`);
+          if (displayData.planSocialActivo) details.push(`Plan Social: ${displayData.planSocialActivo}`);
+          
+          return (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                  INFORMACIÓN ADICIONAL
+                </h4>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
+              </div>
+              <p style={{ fontSize: '12px', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
+                {details.join('  ·  ')}
+              </p>
+            </div>
+          );
+        })()}
+
       </div>
     </div>
   );
@@ -814,7 +649,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
   // Normal view mode
   if (!isEditing) {
     return (
-      <div className="fade-in" style={{ padding: '40px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+      <div className="fade-in" style={{ padding: '40px', maxWidth: '850px', margin: '0 auto', width: '100%' }}>
         {/* Top Action Bar (no-print) */}
         <div className="no-print" style={{
           display: 'flex',
@@ -1027,7 +862,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           {/* ACCORDION SECTIONS */}
 
           {/* 1. INFORMACIÓN PERSONAL */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
             <button
               onClick={() => toggleSection('personal')}
               style={{
@@ -1157,7 +992,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           </div>
 
           {/* 2. PERFIL PROFESIONAL */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
             <button
               onClick={() => toggleSection('perfil')}
               style={{
@@ -1194,7 +1029,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           </div>
 
           {/* 3. EXPERIENCIA LABORAL */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
             <button
               onClick={() => toggleSection('experiencia')}
               style={{
@@ -1258,7 +1093,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
 
                     <div>
                       <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: '#64748b', marginBottom: '3px' }}>TAREAS REALIZADAS</label>
-                      <textarea rows={3} value={exp.tareasRealizadas} onChange={(e) => handleExperienceChange(idx, 'tareasRealizadas', e.target.value)} placeholder="Breve detalle de tareas..." style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', resize: 'vertical' }} />
+                      <textarea rows={3} value={exp.tareasRealizadas} onChange={(e) => handleExperienceChange(idx, 'tareasRealizadas', e.target.value)} placeholder="Breve detalle de tareas (puedes separar tareas con Enter para crear viñetas)..." style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', resize: 'vertical' }} />
                     </div>
                   </div>
                 ))}
@@ -1272,7 +1107,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           </div>
 
           {/* 4. FORMACIÓN ACADÉMICA */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
             <button
               onClick={() => toggleSection('educacion')}
               style={{
@@ -1351,7 +1186,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           </div>
 
           {/* 5. HABILIDADES Y COMPETENCIAS */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
             <button
               onClick={() => toggleSection('habilidades')}
               style={{
@@ -1374,7 +1209,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
             
             {expandedSection === 'habilidades' && (
               <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <p style={{ fontSize: '12px', color: '#64748b' }}>Escribe una habilidad (por ejemplo, "Atención al cliente", "Manejo de caja", "Ventas") y pulsa Enter o Añadir.</p>
+                <p style={{ fontSize: '12px', color: '#64748b' }}>Escribe una habilidad. Para categorizarla como en la planilla, escribe <strong>Categoría: Valor</strong> (ejemplo: <em>Languages: Java</em> o <em>Frameworks: React</em>).</p>
                 
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
@@ -1387,7 +1222,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                         handleAddSkill();
                       }
                     }}
-                    placeholder="Escribe y pulsa Enter..."
+                    placeholder="Ej: Languages: Java..."
                     style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
                   />
                   <button type="button" onClick={handleAddSkill} className="btn-primary" style={{ padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600 }}>
@@ -1413,7 +1248,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           </div>
 
           {/* 6. OTROS DATOS / HABILITACIONES */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
             <button
               onClick={() => toggleSection('adicionales')}
               style={{
