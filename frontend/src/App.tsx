@@ -3,14 +3,15 @@ import Login from './Login';
 import Dashboard from './Dashboard';
 import CandidateForm from './CandidateForm';
 import CandidateCV from './CandidateCV';
+import UserManual from './UserManual';
 import { 
   LogOut, Users, FileText, UserPlus, Loader2, AlertCircle, 
   Briefcase, MapPin, GraduationCap, UserCheck, Calendar, Clock, BarChart3,
-  Key, Plus, X, Trash2
+  Key, Plus, X, Trash2, BookOpen
 } from 'lucide-react';
 
 type ViewState = 'dashboard' | 'create-candidate' | 'edit-candidate' | 'view-cv';
-type TabState = 'postulantes' | 'informes' | 'personal';
+type TabState = 'postulantes' | 'informes' | 'personal' | 'manual';
 
 interface DecodedToken {
   sub: string;
@@ -354,6 +355,14 @@ export default function App() {
               </button>
             </>
           )}
+
+          <button
+            onClick={() => setActiveTab('manual')}
+            className={`sidebar-item ${activeTab === 'manual' ? 'active' : ''}`}
+          >
+            <BookOpen size={18} />
+            Manual de Usuario
+          </button>
         </nav>
       </aside>
 
@@ -884,6 +893,10 @@ export default function App() {
                 )}
               </div>
             </div>
+          )}
+
+          {activeTab === 'manual' && (
+            <UserManual />
           )}
         </main>
       {/* Sleek Create User Modal */}
