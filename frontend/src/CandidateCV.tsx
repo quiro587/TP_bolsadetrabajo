@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { 
   ArrowLeft, Printer, User, Edit, Save, X, Plus, Trash2, 
-  Image as ImageIcon, Sparkles, Download
+  Image as ImageIcon, Download
 } from 'lucide-react';
 
 interface Education {
@@ -767,7 +767,6 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
         flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={18} style={{ color: 'hsl(var(--primary))' }} />
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
             Editor de Currículum: {candidate.nombre} {candidate.apellido}
           </h2>
