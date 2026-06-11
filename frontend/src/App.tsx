@@ -4,7 +4,7 @@ import Dashboard from './Dashboard';
 import CandidateForm from './CandidateForm';
 import CandidateCV from './CandidateCV';
 import UserManual from './UserManual';
-import logoSjCiudad from './assets/sj_ciudad.jpg';
+import logoSjCiudad from './assets/sj_ciudad.png';
 import { 
   LogOut, Users, FileText, UserPlus, Loader2, AlertCircle, 
   Briefcase, MapPin, GraduationCap, UserCheck, Calendar, Clock, BarChart3,
