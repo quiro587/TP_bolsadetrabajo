@@ -752,8 +752,8 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
       display: 'flex', 
       flexDirection: 'column', 
       height: 'calc(100vh - 70px)', 
-      margin: '-40px', // Counteract App.tsx main padding
-      overflow: 'hidden'
+      overflow: 'hidden',
+      width: '100%'
     }}>
       {/* Editor Header */}
       <div style={{
