@@ -384,3 +384,11 @@ input::placeholder {
   to { transform: scale(1); opacity: 1; }
 }
 
+/* Ocultar barra lateral en modo edición de CV */
+body.hide-sidebar-edit .sidebar {
+  display: none !important;
+}
+body.hide-sidebar-edit .app-container {
+  grid-template-columns: 1fr !important;
+}
+

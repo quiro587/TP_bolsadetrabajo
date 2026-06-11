@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { 
   ArrowLeft, Printer, User, Edit, Save, X, Plus, Trash2, 
-  ChevronDown, ChevronUp, Image as ImageIcon, Sparkles, Download
+  Image as ImageIcon, Sparkles, Download
 } from 'lucide-react';
 
 interface Education {
@@ -78,7 +78,6 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [rubrosList, setRubrosList] = useState<Rubro[]>([]);
-  const [expandedSection, setExpandedSection] = useState<string | null>('personal');
   const [newSkill, setNewSkill] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,6 +110,18 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
 
     fetchCandidate();
   }, [candidateId]);
+
+  // Hide main sidebar when editing to expand screen space
+  useEffect(() => {
+    if (isEditing) {
+      document.body.classList.add('hide-sidebar-edit');
+    } else {
+      document.body.classList.remove('hide-sidebar-edit');
+    }
+    return () => {
+      document.body.classList.remove('hide-sidebar-edit');
+    };
+  }, [isEditing]);
 
   // Fetch rubros list when editing
   useEffect(() => {
@@ -368,10 +379,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
     setEditData({ ...editData, rubros: updatedRubros });
   };
 
-  // Toggle Accordion section
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
+
 
   // Smart Skills Renderer (handles categories like Languages: Java, Frameworks: React, or general skills)
   const renderSkills = (data: CandidateData) => {
@@ -862,29 +870,18 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
           {/* ACCORDION SECTIONS */}
 
           {/* 1. INFORMACIÓN PERSONAL */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-            <button
-              onClick={() => toggleSection('personal')}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8fafc',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontWeight: 700,
-                color: '#334155',
-                fontSize: '14px'
-              }}
-            >
-              <span>INFORMACIÓN PERSONAL</span>
-              {expandedSection === 'personal' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {expandedSection === 'personal' && (
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'white' }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 700,
+              color: '#334155',
+              fontSize: '14px'
+            }}>
+              INFORMACIÓN PERSONAL
+            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {/* Photo upload */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '6px' }}>FOTO DE PERFIL</label>
@@ -988,33 +985,21 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   </div>
                 </div>
               </div>
-            )}
           </div>
 
           {/* 2. PERFIL PROFESIONAL */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-            <button
-              onClick={() => toggleSection('perfil')}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8fafc',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontWeight: 700,
-                color: '#334155',
-                fontSize: '14px'
-              }}
-            >
-              <span>PERFIL PROFESIONAL</span>
-              {expandedSection === 'perfil' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {expandedSection === 'perfil' && (
-              <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'white' }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 700,
+              color: '#334155',
+              fontSize: '14px'
+            }}>
+              PERFIL PROFESIONAL
+            </div>
+            <div style={{ padding: '16px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '6px' }}>RESUMEN / OBSERVACIONES GENERALES</label>
                 <textarea
                   name="observacionesGenerales"
@@ -1025,33 +1010,21 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', lineHeight: 1.5, resize: 'vertical' }}
                 />
               </div>
-            )}
           </div>
 
           {/* 3. EXPERIENCIA LABORAL */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-            <button
-              onClick={() => toggleSection('experiencia')}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8fafc',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontWeight: 700,
-                color: '#334155',
-                fontSize: '14px'
-              }}
-            >
-              <span>EXPERIENCIA LABORAL ({editData?.experienciasLaborales.length || 0})</span>
-              {expandedSection === 'experiencia' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {expandedSection === 'experiencia' && (
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'white' }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 700,
+              color: '#334155',
+              fontSize: '14px'
+            }}>
+              EXPERIENCIA LABORAL ({editData?.experienciasLaborales.length || 0})
+            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {editData?.experienciasLaborales.map((exp, idx) => (
                   <div key={idx} style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
                     <button
@@ -1103,33 +1076,21 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   Añadir Experiencia
                 </button>
               </div>
-            )}
           </div>
 
           {/* 4. FORMACIÓN ACADÉMICA */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-            <button
-              onClick={() => toggleSection('educacion')}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8fafc',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontWeight: 700,
-                color: '#334155',
-                fontSize: '14px'
-              }}
-            >
-              <span>FORMACIÓN ACADÉMICA ({editData?.educaciones.length || 0})</span>
-              {expandedSection === 'educacion' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {expandedSection === 'educacion' && (
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'white' }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 700,
+              color: '#334155',
+              fontSize: '14px'
+            }}>
+              FORMACIÓN ACADÉMICA ({editData?.educaciones.length || 0})
+            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {editData?.educaciones.map((edu, idx) => (
                   <div key={idx} style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
                     <button
@@ -1182,33 +1143,21 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   Añadir Educación
                 </button>
               </div>
-            )}
           </div>
 
           {/* 5. HABILIDADES Y COMPETENCIAS */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-            <button
-              onClick={() => toggleSection('habilidades')}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8fafc',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontWeight: 700,
-                color: '#334155',
-                fontSize: '14px'
-              }}
-            >
-              <span>HABILIDADES Y COMPETENCIAS</span>
-              {expandedSection === 'habilidades' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {expandedSection === 'habilidades' && (
-              <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'white' }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 700,
+              color: '#334155',
+              fontSize: '14px'
+            }}>
+              HABILIDADES Y COMPETENCIAS
+            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <p style={{ fontSize: '12px', color: '#64748b' }}>Escribe una habilidad. Para categorizarla como en la planilla, escribe <strong>Categoría: Valor</strong> (ejemplo: <em>Languages: Java</em> o <em>Frameworks: React</em>).</p>
                 
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1244,33 +1193,21 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   )}
                 </div>
               </div>
-            )}
           </div>
 
           {/* 6. OTROS DATOS / HABILITACIONES */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0 }}>
-            <button
-              onClick={() => toggleSection('adicionales')}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8fafc',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                fontWeight: 700,
-                color: '#334155',
-                fontSize: '14px'
-              }}
-            >
-              <span>MÁS DATOS E INTERESES</span>
-              {expandedSection === 'adicionales' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {expandedSection === 'adicionales' && (
-              <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'white' }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontWeight: 700,
+              color: '#334155',
+              fontSize: '14px'
+            }}>
+              MÁS DATOS E INTERESES
+            </div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 
                 {/* Rubros de Interés */}
                 <div>
@@ -1352,7 +1289,6 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   </div>
                 </div>
               </div>
-            )}
           </div>
         </div>
 
