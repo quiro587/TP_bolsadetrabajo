@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, ShieldAlert } from 'lucide-react';
-import logoSjCiudad from './assets/sj_ciudad.png';
+import logoSjCiudad from './assets/sj_ciudad.jpg';
 
 interface LoginProps {
   onLoginSuccess: (token: string) => void;
