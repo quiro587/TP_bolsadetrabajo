@@ -168,6 +168,7 @@ public class CiudadanoService {
         target.setFoto(source.getFoto());
         target.setEstadoLaboral(source.getEstadoLaboral());
         target.setRubros(source.getRubros());
+        target.setBarrio(source.getBarrio());
 
         // Actualizar colecciones limpiando y re-asociando
         target.getEducaciones().clear();

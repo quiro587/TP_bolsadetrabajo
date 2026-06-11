@@ -121,6 +121,10 @@ public class Ciudadano {
     @OneToMany(mappedBy = "ciudadano", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExperienciaLaboral> experienciasLaborales = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_barrio")
+    private Barrio barrio;
+
     @ManyToMany
     @JoinTable(
         name = "ciudadano_rubros",
@@ -261,6 +265,9 @@ public class Ciudadano {
 
     public List<ExperienciaLaboral> getExperienciasLaborales() { return experienciasLaborales; }
     public void setExperienciasLaborales(List<ExperienciaLaboral> experienciasLaborales) { this.experienciasLaborales = experienciasLaborales; }
+
+    public Barrio getBarrio() { return barrio; }
+    public void setBarrio(Barrio barrio) { this.barrio = barrio; }
 
     public List<Rubro> getRubros() { return rubros; }
     public void setRubros(List<Rubro> rubros) { this.rubros = rubros; }

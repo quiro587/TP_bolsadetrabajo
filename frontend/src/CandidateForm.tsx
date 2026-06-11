@@ -26,6 +26,12 @@ interface Rubro {
   activo?: boolean;
 }
 
+interface Barrio {
+  id: number;
+  nombre: string;
+  activo?: boolean;
+}
+
 interface CandidateData {
   id?: number;
   nombre: string;
@@ -53,6 +59,7 @@ interface CandidateData {
   educaciones: Education[];
   experienciasLaborales: WorkExperience[];
   rubros?: Rubro[];
+  barrio?: Barrio | null;
   tipoEmpleoBuscado: string;
   situacionMonotributo: boolean;
   situacionResponsableInscripto: boolean;
@@ -96,6 +103,7 @@ const emptyForm: CandidateData = {
   educaciones: [],
   experienciasLaborales: [],
   rubros: [],
+  barrio: null,
   tipoEmpleoBuscado: 'Cualquiera',
   situacionMonotributo: false,
   situacionResponsableInscripto: false,
@@ -115,6 +123,7 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [availableRubros, setAvailableRubros] = useState<Rubro[]>([]);
+  const [availableBarrios, setAvailableBarrios] = useState<Barrio[]>([]);
 
   // Fetch rubros
   useEffect(() => {
@@ -134,6 +143,26 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
       }
     };
     fetchRubros();
+  }, [token]);
+
+  // Fetch barrios
+  useEffect(() => {
+    const fetchBarrios = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/barrios', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableBarrios(data);
+        }
+      } catch (err) {
+        console.error('Error fetching barrios:', err);
+      }
+    };
+    fetchBarrios();
   }, [token]);
 
   // Fetch candidate data if in edit mode
@@ -201,6 +230,8 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
+    } else if (type === 'number') {
+      setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -654,6 +685,18 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
             </div>
 
             <div className="form-group">
+              <label>Hijos a Cargo</label>
+              <input
+                type="number"
+                name="hijosACargo"
+                min="0"
+                placeholder="Cantidad de hijos"
+                value={formData.hijosACargo}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
               <label>Estado Laboral</label>
               <select name="estadoLaboral" value={formData.estadoLaboral} onChange={handleChange}>
                 <option value="EN_BUSQUEDA_ACTIVA">Entrevista</option>
@@ -683,6 +726,27 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
                 value={formData.direccion}
                 onChange={handleChange}
               />
+            </div>
+
+            <div className="form-group">
+              <label>Barrio</label>
+              <select
+                name="barrioId"
+                value={formData.barrio?.id || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const selected = availableBarrios.find(b => b.id === parseInt(val, 10));
+                  setFormData(prev => ({
+                    ...prev,
+                    barrio: selected || null
+                  }));
+                }}
+              >
+                <option value="">-- Seleccionar Barrio --</option>
+                {availableBarrios.map(b => (
+                  <option key={b.id} value={b.id}>{b.nombre}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">

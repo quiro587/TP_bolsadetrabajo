@@ -355,11 +355,26 @@ input::placeholder {
   border: 2px solid white;
 }
 
+.cv-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: none;
+}
+.cv-print-thead, .cv-print-tfoot {
+  display: none;
+}
+
 /* Print CSS Styles */
 @media print {
+  @page {
+    size: A4;
+    margin: 0; /* completely hides browser header (title, date/time) and footer (localhost URL, page number) */
+  }
   body {
     background-color: white !important;
     color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   .sidebar, .top-header, .no-print, button, .btn {
     display: none !important;
@@ -379,10 +394,42 @@ input::placeholder {
     display: block !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 0 !important;
+    padding: 0 15mm !important;
     margin: 0 !important;
     width: 100% !important;
     min-height: auto !important;
+  }
+  /* Enable table header and footer spacing during printing */
+  .cv-print-thead {
+    display: table-header-group !important;
+  }
+  .cv-print-tfoot {
+    display: table-footer-group !important;
+  }
+  .cv-print-thead-spacer {
+    height: 15mm !important;
+  }
+  .cv-print-tfoot-spacer {
+    height: 15mm !important;
+  }
+  /* Print-specific compact spacing overrides */
+  .cv-print-layout .cv-body {
+    gap: 12px !important;
+  }
+  .cv-print-layout .cv-section {
+    margin-bottom: 0 !important;
+  }
+  .cv-print-layout .cv-item-list {
+    gap: 6px !important;
+  }
+  .cv-print-layout .cv-text,
+  .cv-print-layout .cv-contact-info,
+  .cv-print-layout ul,
+  .cv-print-layout li {
+    line-height: 1.35 !important;
+  }
+  .cv-print-layout .cv-header {
+    margin-bottom: 10px !important;
   }
 }
 

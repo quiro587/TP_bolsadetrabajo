@@ -398,6 +398,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab('manual')}
             className={`sidebar-item ${activeTab === 'manual' ? 'active' : ''}`}
+            style={{ marginTop: 'auto' }}
           >
             <BookOpen size={18} />
             Manual de Usuario
@@ -1200,7 +1201,7 @@ export default function App() {
 
       {/* Custom Toast Notification */}
       {toast && (
-        <div style={{
+        <div className="no-print" style={{
           position: 'fixed',
           top: '24px',
           right: '24px',

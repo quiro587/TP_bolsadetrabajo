@@ -29,6 +29,12 @@ interface Rubro {
   activo?: boolean;
 }
 
+interface Barrio {
+  id: number;
+  nombre: string;
+  activo?: boolean;
+}
+
 interface CandidateData {
   id: number;
   nombre: string;
@@ -54,6 +60,7 @@ interface CandidateData {
   educaciones: Education[];
   experienciasLaborales: WorkExperience[];
   rubros?: Rubro[];
+  barrio?: Barrio | null;
   tipoEmpleoBuscado?: string;
   situacionMonotributo?: boolean;
   situacionResponsableInscripto?: boolean;
@@ -78,6 +85,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [rubrosList, setRubrosList] = useState<Rubro[]>([]);
+  const [barriosList, setBarriosList] = useState<Barrio[]>([]);
   const [newSkill, setNewSkill] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -137,15 +145,49 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
     }
   }, [isEditing]);
 
+  // Fetch barrios list when editing
+  useEffect(() => {
+    if (isEditing && barriosList.length === 0) {
+      fetch('http://localhost:8080/api/barrios', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => setBarriosList(data))
+      .catch(err => console.error("Error al cargar barrios:", err));
+    }
+  }, [isEditing]);
+
   const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = "";
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 100);
   };
 
   const handleDownloadPDF = () => {
     window.showToast("Sugerencia: Selecciona 'Guardar como PDF' en la ventana de impresión.", "info");
+    const originalTitle = document.title;
+    document.title = "";
     setTimeout(() => {
       window.print();
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 100);
     }, 1000);
+  };
+
+  const sanitizeDate = (dateStr: string | undefined): string | null => {
+    if (!dateStr || dateStr.trim() === '') return null;
+    const trimmed = dateStr.trim();
+    // Si solo tiene 4 dígitos (un año), lo completamos a un formato LocalDate válido (yyyy-01-01)
+    if (/^\d{4}$/.test(trimmed)) {
+      return `${trimmed}-01-01`;
+    }
+    return trimmed;
   };
 
   const handleSave = async () => {
@@ -156,7 +198,8 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
         ...editData,
         experienciasLaborales: editData.experienciasLaborales.map(exp => ({
           ...exp,
-          fechaFin: exp.currentlyWorking ? undefined : exp.fechaFin
+          fechaInicio: sanitizeDate(exp.fechaInicio) || '',
+          fechaFin: exp.currentlyWorking ? undefined : sanitizeDate(exp.fechaFin)
         }))
       };
 
@@ -275,6 +318,8 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setEditData({ ...editData, [name]: checked });
+    } else if (type === 'number') {
+      setEditData({ ...editData, [name]: parseInt(value, 10) || 0 });
     } else {
       setEditData({ ...editData, [name]: value });
     }
@@ -405,7 +450,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
     });
     
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#1e293b', lineHeight: 1.6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', color: '#1e293b', lineHeight: 1.4 }}>
         {Object.entries(categorized).map(([category, values], idx) => (
           <div key={idx}>
             <strong style={{ color: '#0f172a' }}>{category}:</strong> {values.join(', ')}
@@ -413,7 +458,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
         ))}
         {uncategorized.length > 0 && (
           <div>
-            <strong style={{ color: '#0f172a' }}>Habilidades / Competencias:</strong> {uncategorized.join(', ')}
+            {uncategorized.join(', ')}
           </div>
         )}
       </div>
@@ -430,8 +475,6 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
   }
 
   const displayData = isEditing ? (editData || candidate) : candidate;
-
-  // Render CV Sheet layout (Single column template matching the user's mockup)
   const renderCVSheet = () => (
     <div className="cv-print-layout" style={{
       backgroundColor: 'white',
@@ -440,217 +483,255 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
       overflow: 'hidden',
       minHeight: '1050px',
       border: '1px solid hsl(var(--border))',
-      padding: '56px 48px',
+      padding: '44px 40px',
       fontFamily: "'Inter', 'Outfit', sans-serif",
       position: 'relative',
       width: '100%',
       boxSizing: 'border-box'
     }}>
       {/* SJ Ciudad Logo Top Right */}
-      <div className="no-print" style={{ position: 'absolute', top: '48px', right: '48px', fontSize: '16px', fontWeight: 800 }}>
+      <div style={{ position: 'absolute', top: '40px', right: '40px', fontSize: '18px', fontWeight: 800 }}>
         <span style={{ color: '#00b4d8' }}>SJ</span> Ciudad
       </div>
 
-      {/* HEADER SECTION (Photo left, Text content right) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '28px', marginBottom: '28px' }}>
-        {/* Profile Photo */}
-        <div style={{
-          width: '90px',
-          height: '90px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          backgroundColor: '#f1f5f9',
-          border: '1px solid #cbd5e1',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          {displayData.foto ? (
-            <img src={displayData.foto} alt={`${displayData.nombre} ${displayData.apellido}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <User size={40} style={{ color: '#cbd5e1' }} />
-          )}
-        </div>
-
-        {/* Name and Contact Info */}
-        <div style={{ flex: 1 }}>
-          <h1 style={{
-            fontSize: '24px',
-            color: '#0f172a',
-            margin: 0,
-            lineHeight: 1.2
-          }}>
-            <span style={{ fontWeight: 400 }}>{displayData.nombre} </span>
-            <span style={{ fontWeight: 700 }}>{displayData.apellido}</span>
-          </h1>
-          
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563', marginTop: '4px' }}>
-            {displayData.cvUrl || 'Postulante'}
-          </div>
-
-          <div style={{
-            fontSize: '11px',
-            color: '#6b7280',
-            marginTop: '6px',
-            lineHeight: 1.5,
-            fontWeight: 500
-          }}>
-            {(() => {
-              const parts = [];
-              if (displayData.email) parts.push(displayData.email);
-              if (displayData.telefonoPrimario) parts.push(displayData.telefonoPrimario);
-              if (displayData.direccion) {
-                let addr = displayData.direccion;
-                if (displayData.puntosReferenciaDomicilio) {
-                  addr += ` (${displayData.puntosReferenciaDomicilio})`;
-                }
-                parts.push(addr);
-              }
-              return parts.join(' | ');
-            })()}
-          </div>
-        </div>
-      </div>
-
-      {/* SINGLE-COLUMN LAYOUT BODY */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <table className="cv-print-table">
+        <thead className="cv-print-thead">
+          <tr>
+            <td>
+              <div className="cv-print-thead-spacer"></div>
+            </td>
+          </tr>
+        </thead>
         
-        {/* PERFIL */}
-        {displayData.observacionesGenerales && displayData.observacionesGenerales.trim() && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-                PERFIL
-              </h4>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
-            </div>
-            <p style={{ fontSize: '12px', color: '#4b5563', lineHeight: 1.6, textAlign: 'justify', margin: 0 }}>
-              {displayData.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '')}
-            </p>
-          </div>
-        )}
-
-        {/* SKILLS / COMPETENCIAS */}
-        {getSkillsArray(displayData).length > 0 && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-                SKILLS
-              </h4>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
-            </div>
-            {renderSkills(displayData)}
-          </div>
-        )}
-
-        {/* EXPERIENCIA LABORAL */}
-        {displayData.experienciasLaborales.length > 0 && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-                EXPERIENCE
-              </h4>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {displayData.experienciasLaborales.map((exp, idx) => (
-                <div key={idx}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{exp.empresa}</span>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{formatYearRange(exp)}</span>
-                  </div>
-                  <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#4b5563', marginTop: '1px' }}>{exp.puesto}</div>
-                  {exp.tareasRealizadas && (
-                    <ul style={{ paddingLeft: '16px', margin: '4px 0 0 0', fontSize: '12px', color: '#4b5563', lineHeight: 1.5 }}>
-                      {exp.tareasRealizadas.split('\n').map(s => s.trim()).filter(Boolean).map((task, tidx) => {
-                        const cleanTask = task.replace(/^[•\-\*\s]+/, '');
-                        return <li key={tidx} style={{ marginBottom: '2px' }}>{cleanTask}</li>;
-                      })}
-                    </ul>
+        <tbody>
+          <tr>
+            <td>
+              {/* HEADER SECTION (Photo left, Text content right) */}
+              <div className="cv-header" style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '14px' }}>
+                {/* Profile Photo */}
+                <div style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {displayData.foto ? (
+                    <img src={displayData.foto} alt={`${displayData.nombre} ${displayData.apellido}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={48} style={{ color: '#cbd5e1' }} />
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* EDUCACIÓN */}
-        {displayData.educaciones.length > 0 && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-                EDUCATION
-              </h4>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {displayData.educaciones.map((edu, idx) => (
-                <div key={idx}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>{edu.institucion}</span>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{formatEduYear(edu)}</span>
+                {/* Name and Contact Info */}
+                <div style={{ flex: 1 }}>
+                  <h1 style={{
+                    fontSize: '30px',
+                    color: '#0f172a',
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    <span style={{ fontWeight: 400 }}>{displayData.nombre} </span>
+                    <span style={{ fontWeight: 700 }}>{displayData.apellido}</span>
+                  </h1>
+                  
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#2563eb', marginTop: '4px' }}>
+                    {displayData.cvUrl || 'Postulante'}
                   </div>
-                  <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#4b5563', marginTop: '1px' }}>
-                    {edu.tituloObtenido || edu.nivelAlcanzado} {edu.finalizado ? '' : '(Incompleto / Cursando)'}
+
+                  <div className="cv-contact-info" style={{
+                    fontSize: '13px',
+                    color: '#4b5563',
+                    marginTop: '6px',
+                    lineHeight: 1.4,
+                    fontWeight: 500
+                  }}>
+                    {(() => {
+                      const parts = [];
+                      if (displayData.email) parts.push(displayData.email);
+                      if (displayData.telefonoPrimario) parts.push(displayData.telefonoPrimario);
+                      if (displayData.direccion) {
+                        let addr = displayData.direccion;
+                        if (displayData.barrio) {
+                          addr += `, Barrio ${displayData.barrio.nombre}`;
+                        }
+                        if (displayData.puntosReferenciaDomicilio) {
+                          addr += ` (${displayData.puntosReferenciaDomicilio})`;
+                        }
+                        parts.push(addr);
+                      } else if (displayData.barrio) {
+                        let addr = `Barrio ${displayData.barrio.nombre}`;
+                        if (displayData.puntosReferenciaDomicilio) {
+                          addr += ` (${displayData.puntosReferenciaDomicilio})`;
+                        }
+                        parts.push(addr);
+                      }
+                      return parts.join(' | ');
+                    })()}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* INTERESES / RUBROS */}
-        {displayData.rubros && displayData.rubros.length > 0 && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-                INTERESES
-              </h4>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
-            </div>
-            <div style={{ fontSize: '12px', color: '#4b5563', lineHeight: 1.5 }}>
-              {displayData.rubros.map(r => r.nombre).join('  ·  ')}
-            </div>
-          </div>
-        )}
-
-        {/* INFORMACIÓN ADICIONAL */}
-        {(() => {
-          const hasAdditional = displayData.movilidadPropia || 
-                                (displayData.licenciaConducir && displayData.licenciaConducir !== 'NO_POSEE') || 
-                                displayData.cudDiscapacidad || 
-                                displayData.tieneObraSocial || 
-                                displayData.planSocialActivo ||
-                                displayData.estadoCivil ||
-                                displayData.hijosACargo > 0;
-          if (!hasAdditional) return null;
-          
-          const details = [];
-          if (displayData.estadoCivil) details.push(`Estado Civil: ${displayData.estadoCivil}`);
-          if (displayData.hijosACargo > 0) details.push(`Hijos a cargo: ${displayData.hijosACargo}`);
-          if (displayData.movilidadPropia) details.push(`Movilidad propia: Sí`);
-          if (displayData.licenciaConducir && displayData.licenciaConducir !== 'NO_POSEE') details.push(`Licencia: ${displayData.licenciaConducir}`);
-          if (displayData.cudDiscapacidad) details.push(`CUD Discapacidad: ${displayData.tipoDiscapacidad || 'Sí'}`);
-          if (displayData.tieneObraSocial) details.push(`Obra Social: Sí`);
-          if (displayData.planSocialActivo) details.push(`Plan Social: ${displayData.planSocialActivo}`);
-          
-          return (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <h4 style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-                  INFORMACIÓN ADICIONAL
-                </h4>
-                <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }}></div>
               </div>
-              <p style={{ fontSize: '12px', color: '#4b5563', lineHeight: 1.6, margin: 0 }}>
-                {details.join('  ·  ')}
-              </p>
-            </div>
-          );
-        })()}
+            </td>
+          </tr>
 
-      </div>
+          <tr>
+            <td>
+              {/* SINGLE-COLUMN LAYOUT BODY */}
+              <div className="cv-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                
+                {/* PERFIL */}
+                {displayData.observacionesGenerales && displayData.observacionesGenerales.trim() && (
+                  <div className="cv-section">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                        PERFIL
+                      </h4>
+                      <div style={{ flex: 1, height: '1.5px', backgroundColor: '#cbd5e1' }}></div>
+                    </div>
+                    <p className="cv-text" style={{ fontSize: '14px', color: '#334155', lineHeight: 1.45, textAlign: 'justify', margin: 0 }}>
+                      {displayData.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '')}
+                    </p>
+                  </div>
+                )}
+
+                {/* HABILIDADES / COMPETENCIAS */}
+                {getSkillsArray(displayData).length > 0 && (
+                  <div className="cv-section">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                        HABILIDADES
+                      </h4>
+                      <div style={{ flex: 1, height: '1.5px', backgroundColor: '#cbd5e1' }}></div>
+                    </div>
+                    <div className="cv-text" style={{ fontSize: '14px' }}>
+                      {renderSkills(displayData)}
+                    </div>
+                  </div>
+                )}
+
+                {/* EXPERIENCIA LABORAL */}
+                {displayData.experienciasLaborales.length > 0 && (
+                  <div className="cv-section">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '6px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                        EXPERIENCIA LABORAL
+                      </h4>
+                      <div style={{ flex: 1, height: '1.5px', backgroundColor: '#cbd5e1' }}></div>
+                    </div>
+                    <div className="cv-item-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {displayData.experienciasLaborales.map((exp, idx) => (
+                        <div key={idx} className="cv-item">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{exp.empresa}</span>
+                            <span style={{ fontSize: '13px', color: '#4b5563', fontWeight: 600 }}>{formatYearRange(exp)}</span>
+                          </div>
+                          <div style={{ fontSize: '14px', fontStyle: 'italic', color: '#4b5563', marginTop: '1px', fontWeight: 500 }}>{exp.puesto}</div>
+                          {exp.tareasRealizadas && (
+                            <ul style={{ paddingLeft: '20px', margin: '2px 0 0 0', fontSize: '13px', color: '#334155', lineHeight: 1.45 }}>
+                              {exp.tareasRealizadas.split('\n').map(s => s.trim()).filter(Boolean).map((task, tidx) => {
+                                const cleanTask = task.replace(/^[•\-\*\s]+/, '');
+                                return <li key={tidx} style={{ marginBottom: '1px' }}>{cleanTask}</li>;
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* EDUCACIÓN */}
+                {displayData.educaciones.length > 0 && (
+                  <div className="cv-section">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '6px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                        FORMACIÓN ACADÉMICA
+                      </h4>
+                      <div style={{ flex: 1, height: '1.5px', backgroundColor: '#cbd5e1' }}></div>
+                    </div>
+                    <div className="cv-item-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {displayData.educaciones.map((edu, idx) => (
+                        <div key={idx} className="cv-item">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{edu.institucion}</span>
+                            <span style={{ fontSize: '13px', color: '#4b5563', fontWeight: 600 }}>{formatEduYear(edu)}</span>
+                          </div>
+                          <div style={{ fontSize: '14px', fontStyle: 'italic', color: '#4b5563', marginTop: '1px', fontWeight: 500 }}>
+                            {edu.tituloObtenido || edu.nivelAlcanzado} {edu.finalizado ? '' : '(Incompleto / Cursando)'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* INTERESES / RUBROS */}
+                {displayData.rubros && displayData.rubros.length > 0 && (
+                  <div className="cv-section">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '4px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                        INTERESES
+                      </h4>
+                      <div style={{ flex: 1, height: '1.5px', backgroundColor: '#cbd5e1' }}></div>
+                    </div>
+                    <div className="cv-text" style={{ fontSize: '14px', color: '#334155', lineHeight: 1.4, fontWeight: 500 }}>
+                      {displayData.rubros.map(r => r.nombre).join('  ·  ')}
+                    </div>
+                  </div>
+                )}
+
+                {/* INFORMACIÓN ADICIONAL */}
+                {(() => {
+                  const hasAdditional = displayData.movilidadPropia || 
+                                        (displayData.licenciaConducir && displayData.licenciaConducir !== 'NO_POSEE') || 
+                                        displayData.cudDiscapacidad || 
+                                        displayData.tieneObraSocial || 
+                                        displayData.planSocialActivo ||
+                                        displayData.estadoCivil ||
+                                        displayData.hijosACargo > 0;
+                  if (!hasAdditional) return null;
+                  
+                  const details = [];
+                  if (displayData.estadoCivil) details.push(`Estado Civil: ${displayData.estadoCivil}`);
+                  if (displayData.hijosACargo > 0) details.push(`Hijos a cargo: ${displayData.hijosACargo}`);
+                  if (displayData.movilidadPropia) details.push(`Movilidad propia: Sí`);
+                  if (displayData.licenciaConducir && displayData.licenciaConducir !== 'NO_POSEE') details.push(`Licencia: ${displayData.licenciaConducir}`);
+                  if (displayData.cudDiscapacidad) details.push(`CUD Discapacidad: ${displayData.tipoDiscapacidad || 'Sí'}`);
+                  if (displayData.tieneObraSocial) details.push(`Obra Social: Sí`);
+                  if (displayData.planSocialActivo) details.push(`Plan Social: ${displayData.planSocialActivo}`);
+                  
+                  return (
+                    <div className="cv-section">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '4px' }}>
+                        <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
+                          INFORMACIÓN ADICIONAL
+                        </h4>
+                        <div style={{ flex: 1, height: '1.5px', backgroundColor: '#cbd5e1' }}></div>
+                      </div>
+                      <p className="cv-text" style={{ fontSize: '14px', color: '#334155', lineHeight: 1.4, margin: 0, fontWeight: 500 }}>
+                        {details.join('  ·  ')}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+
+        <tfoot className="cv-print-tfoot">
+          <tr>
+            <td>
+              <div className="cv-print-tfoot-spacer"></div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 
@@ -948,6 +1029,36 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>DIRECCIÓN</label>
                     <input type="text" name="direccion" value={editData?.direccion || ''} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>BARRIO</label>
+                    <select
+                      name="barrioId"
+                      value={editData?.barrio?.id || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const selected = barriosList.find(b => b.id === parseInt(val, 10));
+                        if (editData) {
+                          setEditData({
+                            ...editData,
+                            barrio: selected || null
+                          });
+                        }
+                      }}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: 'white' }}
+                    >
+                      <option value="">-- Seleccionar Barrio --</option>
+                      {barriosList.map(b => (
+                        <option key={b.id} value={b.id}>{b.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>PUNTOS DE REFERENCIA</label>
+                    <input type="text" name="puntosReferenciaDomicilio" value={editData?.puntosReferenciaDomicilio || ''} onChange={handleInputChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
                   </div>
                 </div>
 
