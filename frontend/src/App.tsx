@@ -4,6 +4,7 @@ import Dashboard from './Dashboard';
 import CandidateForm from './CandidateForm';
 import CandidateCV from './CandidateCV';
 import UserManual from './UserManual';
+import logoSjCiudad from './assets/sj_ciudad.png';
 import { 
   LogOut, Users, FileText, UserPlus, Loader2, AlertCircle, 
   Briefcase, MapPin, GraduationCap, UserCheck, Calendar, Clock, BarChart3,
@@ -359,9 +360,8 @@ export default function App() {
     <div className="app-container">
       {/* Left Sidebar (no-print) */}
       <aside className="sidebar no-print">
-        <div className="sidebar-brand">
-          <span className="logo-sj">SJ</span>
-          <span className="logo-ciudad">Ciudad</span>
+        <div className="sidebar-brand" style={{ padding: '10px 0', display: 'flex', justifyContent: 'center' }}>
+          <img src={logoSjCiudad} alt="SJ Ciudad" style={{ maxHeight: '42px', objectFit: 'contain' }} />
         </div>
 
         <nav className="sidebar-menu">

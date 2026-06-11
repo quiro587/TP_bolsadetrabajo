@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, ShieldAlert } from 'lucide-react';
+import logoSjCiudad from './assets/sj_ciudad.png';
 
 interface LoginProps {
   onLoginSuccess: (token: string) => void;
@@ -77,8 +78,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           marginBottom: '32px',
           border: '1px solid #f1f5f9'
         }}>
-          <span className="logo-sj">SJ</span>
-          <span className="logo-ciudad">Ciudad</span>
+          <img src={logoSjCiudad} alt="SJ Ciudad" style={{ maxHeight: '42px', objectFit: 'contain' }} />
         </div>
 
         <h2 style={{
