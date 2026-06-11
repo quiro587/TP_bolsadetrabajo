@@ -345,6 +345,14 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
       return;
     }
 
+    // Validar correlación DNI / CUIL
+    const cleanDni = formData.dni.replace(/\D/g, '');
+    const cleanCuil = formData.cuil.replace(/\D/g, '');
+    if (!cleanCuil.includes(cleanDni)) {
+      alert('El CUIL no coincide con el DNI ingresado (el DNI debe estar contenido dentro del CUIL).');
+      return;
+    }
+
     setLoading(true);
 
     try {

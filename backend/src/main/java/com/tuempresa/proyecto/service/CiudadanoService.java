@@ -36,6 +36,15 @@ public class CiudadanoService {
 
     @Transactional
     public Ciudadano guardarCiudadano(Ciudadano ciudadano) throws Exception {
+        // Validar correlación entre DNI y CUIL
+        if (ciudadano.getDni() != null && ciudadano.getCuil() != null) {
+            String cleanDni = ciudadano.getDni().replaceAll("\\D", "");
+            String cleanCuil = ciudadano.getCuil().replaceAll("\\D", "");
+            if (!cleanCuil.contains(cleanDni)) {
+                throw new Exception("El CUIL no es válido para el DNI ingresado (el DNI debe estar contenido en el CUIL).");
+            }
+        }
+
         boolean isNew = ciudadano.getId() == null;
 
         // Validar unicidad de DNI y CUIL

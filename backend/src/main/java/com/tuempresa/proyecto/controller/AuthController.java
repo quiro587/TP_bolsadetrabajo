@@ -40,6 +40,9 @@ public class AuthController {
             );
             User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+            if (!user.getUsername().equals(request.getUsername())) {
+                throw new BadCredentialsException("Usuario no encontrado");
+            }
             String token = jwtProvider.generateToken(user);
             return ResponseEntity.ok(new AuthResponse(token));
         } catch (BadCredentialsException e) {
