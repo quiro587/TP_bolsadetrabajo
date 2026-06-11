@@ -89,7 +89,7 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
         const data = await response.json();
         setCandidate(data);
       } catch (err: any) {
-        alert(err.message || 'Error de conexión.');
+        window.showToast(err.message || 'Error de conexión.', 'error');
         onBack();
       } finally {
         setLoading(false);

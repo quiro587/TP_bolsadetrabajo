@@ -180,7 +180,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           onMouseLeave={(e) => (e.currentTarget.style.color = 'hsl(var(--text-muted))')}
           onClick={(e) => {
             e.preventDefault();
-            alert('Por favor, contacte al administrador del sistema para recuperar su contraseña.');
+            window.showToast('Por favor, contacte al administrador del sistema para recuperar su contraseña.', 'info');
           }}>
             ¿Olvidaste tu contraseña?
           </a>

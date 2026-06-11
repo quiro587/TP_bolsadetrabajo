@@ -123,7 +123,7 @@ export default function Dashboard({ token, userRole, onNewCandidate, onEditCandi
       setNewRubroName('');
       await fetchRubros();
     } catch (err: any) {
-      alert(err.message || 'Error al guardar el rubro.');
+      window.showToast(err.message || 'Error al guardar el rubro.', 'error');
     } finally {
       setCreatingRubro(false);
     }
@@ -151,36 +151,40 @@ export default function Dashboard({ token, userRole, onNewCandidate, onEditCandi
       await fetchRubros();
       fetchCandidates(search, selectedRubroId, page);
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar el rubro.');
+      window.showToast(err.message || 'Error al actualizar el rubro.', 'error');
     }
   };
 
-  const handleDeleteRubro = async (id: number, name: string) => {
-    if (!window.confirm(`¿Estás seguro de que deseas dar de baja el rubro "${name}"? No se eliminarán los postulantes vinculados, pero este rubro ya no aparecerá como opción.`)) {
-      return;
-    }
-    try {
-      const response = await fetch(`http://localhost:8080/api/rubros/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+  const handleDeleteRubro = (id: number, name: string) => {
+    window.showConfirm({
+      title: 'Dar de baja Rubro',
+      message: `¿Estás seguro de que deseas dar de baja el rubro "${name}"? No se eliminarán los postulantes vinculados, pero este rubro ya no aparecerá como opción.`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:8080/api/rubros/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('Error al dar de baja el rubro.');
+          }
+
+          window.showToast('Rubro dado de baja con éxito.', 'success');
+          await fetchRubros();
+          if (selectedRubroId === id) {
+            setSelectedRubroId(null);
+            setPage(0);
+          } else {
+            fetchCandidates(search, selectedRubroId, page);
+          }
+        } catch (err: any) {
+          window.showToast(err.message || 'Error al dar de baja el rubro.', 'error');
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al dar de baja el rubro.');
       }
-
-      await fetchRubros();
-      if (selectedRubroId === id) {
-        setSelectedRubroId(null);
-        setPage(0);
-      } else {
-        fetchCandidates(search, selectedRubroId, page);
-      }
-    } catch (err: any) {
-      alert(err.message || 'Error al dar de baja el rubro.');
-    }
+    });
   };
 
   useEffect(() => {
@@ -202,28 +206,30 @@ export default function Dashboard({ token, userRole, onNewCandidate, onEditCandi
     };
   }, [showRubroModal]);
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!window.confirm(`¿Estás seguro de que deseas dar de baja al postulante ${name}?`)) {
-      return;
-    }
+  const handleDelete = (id: number, name: string) => {
+    window.showConfirm({
+      title: 'Dar de baja postulante',
+      message: `¿Estás seguro de que deseas dar de baja al postulante "${name}"?`,
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`http://localhost:8080/api/ciudadanos/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
 
-    try {
-      const response = await fetch(`http://localhost:8080/api/ciudadanos/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+          if (!response.ok) {
+            throw new Error('No se pudo eliminar al postulante.');
+          }
+
+          setCandidates(prev => prev.filter(c => c.id !== id));
+          window.showToast('Postulante dado de baja con éxito.', 'success');
+        } catch (err: any) {
+          window.showToast(err.message || 'Error al eliminar postulante.', 'error');
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo eliminar al postulante.');
       }
-
-      setCandidates(prev => prev.filter(c => c.id !== id));
-      alert('Postulante dado de baja con éxito.');
-    } catch (err: any) {
-      alert(err.message || 'Error al eliminar postulante.');
-    }
+    });
   };
 
   const toggleCandidateStatus = async (id: number, currentStatus: string) => {
@@ -246,7 +252,7 @@ export default function Dashboard({ token, userRole, onNewCandidate, onEditCandi
       // Actualizar el estado localmente
       setCandidates(prev => prev.map(c => c.id === id ? { ...c, estadoLaboral: nextStatus } : c));
     } catch (err: any) {
-      alert(err.message || 'Error de conexión al actualizar el estado.');
+      window.showToast(err.message || 'Error de conexión al actualizar el estado.', 'error');
     }
   };
 

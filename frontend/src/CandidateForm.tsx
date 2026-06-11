@@ -173,7 +173,7 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
             setSkills(data.habilidades.split(',').map((s: string) => s.trim()).filter(Boolean));
           }
         } catch (err: any) {
-          alert(err.message || 'Error de conexión.');
+          window.showToast(err.message || 'Error de conexión.', 'error');
           onBack();
         } finally {
           setFetching(false);
@@ -341,7 +341,7 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nombre || !formData.apellido || !formData.dni || !formData.cuil || !formData.fechaNacimiento || !formData.telefonoPrimario) {
-      alert('Por favor, completa los campos requeridos (*).');
+      window.showToast('Por favor, completa los campos requeridos (*).', 'error');
       return;
     }
 
@@ -349,7 +349,7 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
     const cleanDni = formData.dni.replace(/\D/g, '');
     const cleanCuil = formData.cuil.replace(/\D/g, '');
     if (!cleanCuil.includes(cleanDni)) {
-      alert('El CUIL no coincide con el DNI ingresado (el DNI debe estar contenido dentro del CUIL).');
+      window.showToast('El CUIL no coincide con el DNI ingresado (el DNI debe estar contenido dentro del CUIL).', 'error');
       return;
     }
 
@@ -379,10 +379,10 @@ export default function CandidateForm({ token, candidateId, onBack, onSaveSucces
         throw new Error(errorText || 'Error al guardar el perfil del postulante.');
       }
 
-      alert('Perfil guardado con éxito.');
+      window.showToast('Perfil guardado con éxito.', 'success');
       onSaveSuccess();
     } catch (err: any) {
-      alert(err.message || 'Error al guardar.');
+      window.showToast(err.message || 'Error al guardar.', 'error');
     } finally {
       setLoading(false);
     }

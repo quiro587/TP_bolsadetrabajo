@@ -7,7 +7,7 @@ import UserManual from './UserManual';
 import { 
   LogOut, Users, FileText, UserPlus, Loader2, AlertCircle, 
   Briefcase, MapPin, GraduationCap, UserCheck, Calendar, Clock, BarChart3,
-  Key, Plus, X, Trash2, BookOpen
+  Key, Plus, X, Trash2, BookOpen, Check
 } from 'lucide-react';
 
 type ViewState = 'dashboard' | 'create-candidate' | 'edit-candidate' | 'view-cv';
@@ -38,6 +38,18 @@ function parseJwt(token: string): DecodedToken | null {
   }
 }
 
+declare global {
+  interface Window {
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+    showConfirm: (options: {
+      title: string;
+      message: string;
+      onConfirm: () => void;
+      onCancel?: () => void;
+    }) => void;
+  }
+}
+
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -46,6 +58,29 @@ export default function App() {
   const [view, setView] = useState<ViewState>('dashboard');
   const [activeTab, setActiveTab] = useState<TabState>('postulantes');
   const [activeCandidateId, setActiveCandidateId] = useState<number | null>(null);
+
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  } | null>(null);
+
+  window.showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ message, type });
+  };
+
+  window.showConfirm = (options) => {
+    setConfirmModal(options);
+  };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const [stats, setStats] = useState<any | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -106,7 +141,7 @@ export default function App() {
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUsername.trim() || !newPassword.trim() || !newNombreCompleto.trim()) {
-      alert('Por favor completa todos los campos.');
+      window.showToast('Por favor completa todos los campos.', 'error');
       return;
     }
     setCreatingUser(true);
@@ -131,7 +166,7 @@ export default function App() {
       return res.json();
     })
     .then(() => {
-      alert('Usuario creado con éxito.');
+      window.showToast('Usuario creado con éxito.', 'success');
       setShowCreateUserModal(false);
       setNewUsername('');
       setNewPassword('');
@@ -140,7 +175,7 @@ export default function App() {
       fetchUsers();
     })
     .catch(err => {
-      alert(err.message || 'Ocurrió un error.');
+      window.showToast(err.message || 'Ocurrió un error.', 'error');
     })
     .finally(() => {
       setCreatingUser(false);
@@ -150,7 +185,7 @@ export default function App() {
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForPassword || !changePasswordField.trim()) {
-      alert('Por favor ingresa la nueva contraseña.');
+      window.showToast('Por favor ingresa la nueva contraseña.', 'error');
       return;
     }
     setChangingPassword(true);
@@ -172,13 +207,13 @@ export default function App() {
       return res.json();
     })
     .then(() => {
-      alert('Contraseña actualizada con éxito.');
+      window.showToast('Contraseña actualizada con éxito.', 'success');
       setShowChangePasswordModal(false);
       setSelectedUserForPassword(null);
       setChangePasswordField('');
     })
     .catch(err => {
-      alert(err.message || 'Ocurrió un error.');
+      window.showToast(err.message || 'Ocurrió un error.', 'error');
     })
     .finally(() => {
       setChangingPassword(false);
@@ -208,33 +243,37 @@ export default function App() {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, activo: nextStatus } : u));
     })
     .catch(err => {
-      alert(err.message || 'Ocurrió un error.');
+      window.showToast(err.message || 'Ocurrió un error.', 'error');
     });
   };
 
   const handleDeleteUser = (userId: number, name: string) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar al usuario de personal "${name}"?`)) {
-      fetch(`http://localhost:8080/api/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(async res => {
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || 'Error al eliminar el usuario.');
-        }
-        return res.json();
-      })
-      .then(() => {
-        alert('Usuario de personal eliminado con éxito.');
-        setUsers(prev => prev.filter(u => u.id !== userId));
-      })
-      .catch(err => {
-        alert(err.message || 'Ocurrió un error.');
-      });
-    }
+    window.showConfirm({
+      title: 'Eliminar Personal',
+      message: `¿Estás seguro de que deseas eliminar al usuario de personal "${name}"?`,
+      onConfirm: () => {
+        fetch(`http://localhost:8080/api/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(async res => {
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || 'Error al eliminar el usuario.');
+          }
+          return res.json();
+        })
+        .then(() => {
+          window.showToast('Usuario de personal eliminado con éxito.', 'success');
+          setUsers(prev => prev.filter(u => u.id !== userId));
+        })
+        .catch(err => {
+          window.showToast(err.message || 'Ocurrió un error.', 'error');
+        });
+      }
+    });
   };
 
   // Decode JWT on load or change
@@ -1157,6 +1196,113 @@ export default function App() {
                 )}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          backgroundColor: toast.type === 'success' ? '#10b981' : toast.type === 'error' ? '#ef4444' : '#3b82f6',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          animation: 'slideIn 0.3s ease forwards',
+          fontWeight: 500,
+          fontSize: '14px',
+        }}>
+          {toast.type === 'success' && <Check size={18} />}
+          {toast.type === 'error' && <AlertCircle size={18} />}
+          {toast.type === 'info' && <Loader2 size={18} className="animate-spin" />}
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease forwards'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            border: '1px solid hsl(var(--border))',
+            boxShadow: 'var(--shadow-lg)',
+            width: '100%',
+            maxWidth: '440px',
+            padding: '32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px',
+            animation: 'scaleUp 0.2s ease forwards'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                {confirmModal.title}
+              </h3>
+              <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                {confirmModal.message}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  if (confirmModal.onCancel) confirmModal.onCancel();
+                  setConfirmModal(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#475569',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'var(--transition)'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'var(--transition)'
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
           </div>
         </div>
       )}
