@@ -6,7 +6,7 @@ from datetime import datetime
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
-    "password": "sysadmin",
+    "password": "080121",
     "database": "oficina_empleo_sanjose"
 }
 
@@ -320,7 +320,7 @@ def main():
             # Consolidate Observaciones Generales
             obs_parts = []
             if perfil:
-                obs_parts.append(f"Perfil original Excel: {perfil}")
+                obs_parts.append(perfil)
             if solucion_brindada:
                 obs_parts.append(f"Solución brindada: {solucion_brindada}")
             if comentario_1:

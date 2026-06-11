@@ -156,6 +156,7 @@ public class CiudadanoService {
         target.setPlanSocialActivo(source.getPlanSocialActivo());
         target.setObservacionesGenerales(source.getObservacionesGenerales());
         target.setHabilidades(source.getHabilidades());
+        target.setFoto(source.getFoto());
         target.setEstadoLaboral(source.getEstadoLaboral());
         target.setRubros(source.getRubros());
 

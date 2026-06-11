@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Printer, Mail, Phone, MapPin, User, Briefcase, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Printer, MapPin, User } from 'lucide-react';
 
 interface Education {
   id?: number;
@@ -59,6 +59,7 @@ interface CandidateData {
   situacionRegistroEspecifico?: string;
   tieneObraSocial?: boolean;
   planSocialActivo?: string;
+  foto?: string;
 }
 
 interface CandidateCVProps {
@@ -179,362 +180,421 @@ export default function CandidateCV({ token, candidateId, onBack }: CandidateCVP
         borderRadius: '24px',
         boxShadow: 'var(--shadow-lg)',
         overflow: 'hidden',
-        display: 'grid',
-        gridTemplateColumns: '320px 1fr',
         minHeight: '1100px',
-        border: '1px solid hsl(var(--border))'
+        border: '1px solid hsl(var(--border))',
+        padding: '56px 48px',
+        fontFamily: "'Outfit', 'Inter', sans-serif",
+        position: 'relative'
       }}>
-        {/* Left Sidebar (Navy Blue) */}
-        <div className="cv-sidebar" style={{
-          backgroundColor: '#0d3b66',
-          color: 'white',
-          padding: '48px 32px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '40px'
-        }}>
-          {/* Circular Profile PlaceHolder */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-            <div style={{
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              border: '2px solid rgba(255,255,255,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'rgba(255,255,255,0.7)'
-            }}>
-              <User size={64} strokeWidth={1} />
-            </div>
+        {/* SJ Ciudad Logo Top Right */}
+        <div style={{ position: 'absolute', top: '48px', right: '48px', fontSize: '18px', fontWeight: 800 }}>
+          <span style={{ color: '#00b4d8' }}>SJ</span> Ciudad
+        </div>
 
-            {/* SJ Ciudad Logo inside sidebar */}
-            <div style={{ fontSize: '20px', fontWeight: 800 }}>
-              <span style={{ color: '#00b4d8' }}>SJ</span> Ciudad
-            </div>
+        {/* HEADER SECTION (Centered Name & Photo) */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '40px' }}>
+          {/* Profile Photo */}
+          <div style={{
+            width: '110px',
+            height: '110px',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            backgroundColor: '#e2e8f0',
+            border: '2px solid #cbd5e1',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+          }}>
+            {candidate.foto ? (
+              <img src={candidate.foto} alt={`${candidate.nombre} ${candidate.apellido}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <User size={56} style={{ color: '#94a3b8' }} />
+            )}
           </div>
 
-          {/* CONTACT INFO */}
-          <div>
-            <h4 style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              borderBottom: '1px solid rgba(255,255,255,0.15)',
-              paddingBottom: '8px',
-              marginBottom: '16px',
-              color: '#00b4d8'
-            }}>Contacto</h4>
+          {/* Full Name */}
+          <h1 style={{
+            fontSize: '32px',
+            fontWeight: 800,
+            color: '#0f172a',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            margin: 0
+          }}>
+            {candidate.nombre} {candidate.apellido}
+          </h1>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', wordBreak: 'break-all' }}>
-                <Mail size={16} style={{ color: '#00b4d8', flexShrink: 0 }} />
-                <span>{candidate.email || 'ema.r@ciudad.gob'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Phone size={16} style={{ color: '#00b4d8', flexShrink: 0 }} />
-                <span>{candidate.telefonoPrimario || '+54 254 4123456'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <MapPin size={16} style={{ color: '#00b4d8', flexShrink: 0 }} />
-                <span>{candidate.direccion || 'San Juan, Argentina'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: '4px', fontSize: '12px', opacity: 0.8 }}>
-                <span style={{ fontWeight: 600 }}>DNI</span>
-                <span>{candidate.dni || '38.122.456'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* SKILLS */}
-          <div>
-            <h4 style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              borderBottom: '1px solid rgba(255,255,255,0.15)',
-              paddingBottom: '8px',
-              marginBottom: '16px',
-              color: '#00b4d8'
-            }}>Habilidades</h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {getSkillsArray().length === 0 ? (
-                <span style={{ fontSize: '13px', fontStyle: 'italic', opacity: 0.6 }}>No declaradas</span>
-              ) : (
-                getSkillsArray().map((skill, idx) => (
-                  <div 
-                    key={idx}
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.06)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}
-                  >
-                    {skill}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* RUBROS DE INTERÉS */}
-          <div>
-            <h4 style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              borderBottom: '1px solid rgba(255,255,255,0.15)',
-              paddingBottom: '8px',
-              marginBottom: '16px',
-              color: '#00b4d8'
-            }}>Rubros de Interés</h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {!candidate.rubros || candidate.rubros.length === 0 ? (
-                <span style={{ fontSize: '13px', fontStyle: 'italic', opacity: 0.6 }}>No declarados</span>
-              ) : (
-                candidate.rubros.map((rubro) => (
-                  <div 
-                    key={rubro.id}
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.06)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}
-                  >
-                    {rubro.nombre}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* SITUACIÓN FISCAL Y SOCIAL */}
-          <div>
-            <h4 style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              borderBottom: '1px solid rgba(255,255,255,0.15)',
-              paddingBottom: '8px',
-              marginBottom: '16px',
-              color: '#00b4d8'
-            }}>Situación y Preferencia</h4>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-              <div>
-                <span style={{ color: '#00b4d8', fontWeight: 600 }}>Empleo buscado:</span>
-                <span style={{ marginLeft: '6px' }}>{candidate.tipoEmpleoBuscado || 'Cualquiera'}</span>
-              </div>
-              <div>
-                <span style={{ color: '#00b4d8', fontWeight: 600 }}>Obra Social:</span>
-                <span style={{ marginLeft: '6px' }}>{candidate.tieneObraSocial ? 'Sí posee' : 'No posee'}</span>
-              </div>
-              {candidate.planSocialActivo && (
-                <div>
-                  <span style={{ color: '#00b4d8', fontWeight: 600 }}>Plan Social:</span>
-                  <span style={{ marginLeft: '6px' }}>{candidate.planSocialActivo}</span>
-                </div>
-              )}
-              
-              {/* Fiscal labels */}
-              {(candidate.situacionMonotributo || candidate.situacionResponsableInscripto || candidate.situacionAter || candidate.situacionHabilitacionMunicipal || candidate.situacionRegistroEspecifico) && (
-                <div style={{ marginTop: '8px' }}>
-                  <span style={{ color: '#00b4d8', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Habilitaciones:</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {candidate.situacionMonotributo && (
-                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                        Monotributo
-                      </span>
-                    )}
-                    {candidate.situacionResponsableInscripto && (
-                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                        Resp. Inscripto
-                      </span>
-                    )}
-                    {candidate.situacionAter && (
-                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                        ATER
-                      </span>
-                    )}
-                    {candidate.situacionHabilitacionMunicipal && (
-                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
-                        Hab. Municipal
-                      </span>
-                    )}
-                    {candidate.situacionRegistroEspecifico && (
-                      <span style={{ fontSize: '11px', backgroundColor: 'rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px', width: '100%', wordBreak: 'break-all' }}>
-                        Reg: {candidate.situacionRegistroEspecifico}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Subtitle Details */}
+          <div style={{
+            fontSize: '13px',
+            color: '#64748b',
+            fontWeight: 600,
+            marginTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <span>{candidate.cvUrl || 'Postulante'}</span>
+            <span style={{ color: '#cbd5e1' }}>|</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <MapPin size={14} />
+              {candidate.direccion || 'San José, Entre Ríos'}
+            </span>
+            <span style={{ color: '#cbd5e1' }}>|</span>
+            <span>{candidate.telefonoPrimario}</span>
           </div>
         </div>
 
-        {/* Right Main Body (White) */}
+        {/* TWO-COLUMN GRID LAYOUT */}
         <div style={{
-          padding: '56px 48px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '40px'
+          display: 'grid',
+          gridTemplateColumns: '280px 1fr',
+          gap: '40px',
+          borderTop: '1px solid #e2e8f0',
+          paddingTop: '32px'
         }}>
-          {/* Header Name & Title */}
-          <div>
-            <h1 style={{
-              fontSize: '36px',
-              fontWeight: 800,
-              letterSpacing: '0.5px',
-              color: '#0f172a',
-              textTransform: 'uppercase'
-            }}>
-              {candidate.nombre} {candidate.apellido}
-            </h1>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#3b82f6',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginTop: '6px'
-            }}>
-              {candidate.cvUrl || 'Lic. en Administración de Empresas'}
-            </h3>
-            {/* Black solid bar line */}
-            <div style={{
-              width: '100%',
-              height: '4px',
-              backgroundColor: '#0f172a',
-              marginTop: '16px'
-            }}></div>
-          </div>
-
-          {/* WORK EXPERIENCE TIMELINE */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <Briefcase size={20} style={{ color: '#0d3b66' }} />
+          {/* LEFT Narrow Column (Details & Competencies) */}
+          <div style={{
+            borderRight: '1px solid #e2e8f0',
+            paddingRight: '32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '36px'
+          }}>
+            {/* DETALLES */}
+            <div>
               <h4 style={{
-                fontSize: '14px',
-                fontWeight: 700,
-                letterSpacing: '1px',
-                color: '#0d3b66',
-                textTransform: 'uppercase'
-              }}>Experiencia Laboral</h4>
+                fontSize: '12px',
+                fontWeight: 800,
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                color: '#334155',
+                textAlign: 'center',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '10px', color: '#94a3b8' }}>o</span> DETALLES <span style={{ fontSize: '10px', color: '#94a3b8' }}>o</span>
+              </h4>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px', color: '#475569' }}>
+                {candidate.email && (
+                  <div style={{ textAlign: 'center', wordBreak: 'break-all' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</span>
+                    <span>{candidate.email}</span>
+                  </div>
+                )}
+                {candidate.telefonoSecundario && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Teléfono Secundario</span>
+                    <span>{candidate.telefonoSecundario}</span>
+                  </div>
+                )}
+                {candidate.puntosReferenciaDomicilio && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ref. Dirección</span>
+                    <span>{candidate.puntosReferenciaDomicilio}</span>
+                  </div>
+                )}
+                {candidate.fechaNacimiento && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fecha de Nacimiento</span>
+                    <span>{candidate.fechaNacimiento.substring(0, 10).split('-').reverse().join('/')}</span>
+                  </div>
+                )}
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Documentos</span>
+                  <span>DNI: {candidate.dni}</span>
+                  {candidate.cuil && <span style={{ display: 'block', fontSize: '12px' }}>CUIL: {candidate.cuil}</span>}
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Datos Personales</span>
+                  <span>Género: {candidate.genero}</span>
+                  <span style={{ display: 'block' }}>E. Civil: {candidate.estadoCivil || 'No especificado'}</span>
+                  <span style={{ display: 'block' }}>Hijos a cargo: {candidate.hijosACargo || 0}</span>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Licencia y Movilidad</span>
+                  <span>Movilidad propia: {candidate.movilidadPropia ? 'Sí' : 'No'}</span>
+                  <span style={{ display: 'block' }}>
+                    Licencia: {
+                      !candidate.licenciaConducir || candidate.licenciaConducir === 'NO_POSEE'
+                        ? 'No posee'
+                        : candidate.licenciaConducir
+                    }
+                  </span>
+                </div>
+                {(candidate.tieneObraSocial || candidate.planSocialActivo) && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Seguridad Social</span>
+                    <span>Obra social: {candidate.tieneObraSocial ? 'Sí posee' : 'No posee'}</span>
+                    {candidate.planSocialActivo && <span style={{ display: 'block' }}>Plan: {candidate.planSocialActivo}</span>}
+                  </div>
+                )}
+                {(candidate.situacionMonotributo || candidate.situacionResponsableInscripto || candidate.situacionAter || candidate.situacionHabilitacionMunicipal || candidate.situacionRegistroEspecifico) && (
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontWeight: 700, color: '#1e293b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Habilitaciones</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '4px', fontSize: '11px' }}>
+                      {candidate.situacionMonotributo && <span>• Monotributista</span>}
+                      {candidate.situacionResponsableInscripto && <span>• Responsable Inscripto</span>}
+                      {candidate.situacionAter && <span>• Registro ATER</span>}
+                      {candidate.situacionHabilitacionMunicipal && <span>• Habilitación Municipal</span>}
+                      {candidate.situacionRegistroEspecifico && <span>• {candidate.situacionRegistroEspecifico}</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {candidate.experienciasLaborales.length === 0 ? (
-              <div style={{ fontSize: '14px', color: 'hsl(var(--text-muted))', fontStyle: 'italic' }}>
-                Sin experiencia registrada
-              </div>
-            ) : (
-              <div className="timeline">
-                {candidate.experienciasLaborales.map((exp, idx) => (
-                  <div key={idx} className="timeline-item">
-                    <div className="timeline-marker"></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>
-                          {exp.puesto || 'Analista de Presupuesto'}
-                        </h5>
-                        <p style={{ fontSize: '13px', fontWeight: 600, color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                          {exp.empresa || 'Ministerio de Hacienda'}
-                        </p>
-                      </div>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        backgroundColor: '#f1f5f9',
-                        color: 'hsl(var(--text-muted))',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        letterSpacing: '0.5px'
-                      }}>
-                        {formatYearRange(exp)}
-                      </span>
-                    </div>
-                    {exp.tareasRealizadas && (
-                      <p style={{
+            {/* COMPETENCIAS */}
+            {getSkillsArray().length > 0 && (
+              <div>
+                <h4 style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase',
+                  color: '#334155',
+                  textAlign: 'center',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>o</span> COMPETENCIAS <span style={{ fontSize: '10px', color: '#94a3b8' }}>o</span>
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {getSkillsArray().map((skill, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        textAlign: 'center',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #1e293b',
                         fontSize: '13px',
-                        color: 'hsl(var(--text-main))',
-                        marginTop: '8px',
-                        lineHeight: 1.6
-                      }}>
-                        {exp.tareasRealizadas}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                        fontWeight: 600,
+                        color: '#334155',
+                        textTransform: 'capitalize'
+                      }}
+                    >
+                      {skill}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* RUBROS DE INTERÉS */}
+            {candidate.rubros && candidate.rubros.length > 0 && (
+              <div>
+                <h4 style={{
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase',
+                  color: '#334155',
+                  textAlign: 'center',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>o</span> INTERESES <span style={{ fontSize: '10px', color: '#94a3b8' }}>o</span>
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {candidate.rubros.map((rubro) => (
+                    <div
+                      key={rubro.id}
+                      style={{
+                        textAlign: 'center',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #e2e8f0',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: '#64748b'
+                      }}
+                    >
+                      {rubro.nombre}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* ACADEMIC FORMATION TIMELINE */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <GraduationCap size={22} style={{ color: '#0d3b66' }} />
-              <h4 style={{
-                fontSize: '14px',
-                fontWeight: 700,
-                letterSpacing: '1px',
-                color: '#0d3b66',
-                textTransform: 'uppercase'
-              }}>Formación Académica</h4>
-            </div>
-
-            {candidate.educaciones.length === 0 ? (
-              <div style={{ fontSize: '14px', color: 'hsl(var(--text-muted))', fontStyle: 'italic' }}>
-                Sin formación registrada
-              </div>
-            ) : (
-              <div className="timeline">
-                {candidate.educaciones.map((edu, idx) => (
-                  <div key={idx} className="timeline-item">
-                    <div className="timeline-marker"></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase' }}>
-                          {edu.tituloObtenido || 'Licenciatura en Administración'}
-                        </h5>
-                        <p style={{ fontSize: '13px', fontWeight: 600, color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                          {edu.institucion || 'UNSJ'}
-                        </p>
-                      </div>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        backgroundColor: '#f1f5f9',
-                        color: 'hsl(var(--text-muted))',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        letterSpacing: '0.5px'
-                      }}>
-                        {formatEduYear(edu)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+          {/* RIGHT Wide Column (Profile & Timelines) */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '36px'
+          }}>
+            {/* PERFIL */}
+            {candidate.observacionesGenerales && candidate.observacionesGenerales.trim() && (
+              <div>
+                <h4 style={{
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  letterSpacing: '1.5px',
+                  color: '#0f172a',
+                  textTransform: 'uppercase',
+                  marginBottom: '12px'
+                }}>
+                  PERFIL
+                </h4>
+                <div style={{
+                  borderLeft: '2px solid #cbd5e1',
+                  paddingLeft: '16px',
+                  fontSize: '13px',
+                  color: '#475569',
+                  lineHeight: 1.6,
+                  textAlign: 'justify'
+                }}>
+                  {candidate.observacionesGenerales.replace(/^Perfil original Excel:\s*/gi, '')}
+                </div>
               </div>
             )}
+
+            {/* EXPERIENCIA LABORAL */}
+            <div>
+              <h4 style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                letterSpacing: '1.5px',
+                color: '#0f172a',
+                textTransform: 'uppercase',
+                marginBottom: '20px'
+              }}>
+                EXPERIENCIA LABORAL
+              </h4>
+
+              {candidate.experienciasLaborales.length === 0 ? (
+                <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', marginLeft: '12px' }}>Sin experiencia laboral previa registrada.</p>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '24px',
+                  borderLeft: '2px solid #e2e8f0',
+                  paddingLeft: '24px',
+                  marginLeft: '8px'
+                }}>
+                  {candidate.experienciasLaborales.map((exp, idx) => (
+                    <div key={idx} style={{ position: 'relative' }}>
+                      {/* Circle Timeline Bullet */}
+                      <div style={{
+                        position: 'absolute',
+                        left: '-31px',
+                        top: '4px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        backgroundColor: 'white',
+                        border: '2px solid #475569',
+                        boxShadow: '0 0 0 4px white'
+                      }}></div>
+
+                      {/* Header details */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase' }}>
+                          {exp.puesto}
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                          {formatYearRange(exp)}
+                        </span>
+                      </div>
+
+                      {/* Subtitle details */}
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginTop: '2px' }}>
+                        {exp.empresa}
+                      </div>
+
+                      {/* Job tasks / description */}
+                      {exp.tareasRealizadas && (
+                        <p style={{
+                          fontSize: '13px',
+                          color: '#64748b',
+                          marginTop: '8px',
+                          lineHeight: 1.6,
+                          textAlign: 'justify',
+                          whiteSpace: 'pre-wrap'
+                        }}>
+                          {exp.tareasRealizadas}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* EDUCACIÓN */}
+            <div>
+              <h4 style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                letterSpacing: '1.5px',
+                color: '#0f172a',
+                textTransform: 'uppercase',
+                marginBottom: '20px'
+              }}>
+                EDUCACIÓN
+              </h4>
+
+              {candidate.educaciones.length === 0 ? (
+                <p style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', marginLeft: '12px' }}>Sin registros de formación académica.</p>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '20px',
+                  borderLeft: '2px solid #e2e8f0',
+                  paddingLeft: '24px',
+                  marginLeft: '8px'
+                }}>
+                  {candidate.educaciones.map((edu, idx) => (
+                    <div key={idx} style={{ position: 'relative' }}>
+                      {/* Circle Timeline Bullet */}
+                      <div style={{
+                        position: 'absolute',
+                        left: '-31px',
+                        top: '4px',
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        backgroundColor: 'white',
+                        border: '2px solid #475569',
+                        boxShadow: '0 0 0 4px white'
+                      }}></div>
+
+                      {/* Header details */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase' }}>
+                          {edu.tituloObtenido || edu.nivelAlcanzado}
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                          {formatEduYear(edu)}
+                        </span>
+                      </div>
+
+                      {/* Subtitle details */}
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginTop: '2px' }}>
+                        {edu.institucion} {edu.finalizado ? '' : '(Cursando)'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

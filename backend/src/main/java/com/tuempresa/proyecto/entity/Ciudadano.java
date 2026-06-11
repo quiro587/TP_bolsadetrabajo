@@ -101,6 +101,9 @@ public class Ciudadano {
     @Column(length = 500)
     private String habilidades;
 
+    @Column(name = "foto", columnDefinition = "LONGTEXT")
+    private String foto;
+
     @Column(name = "fecha_registro", insertable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
@@ -261,4 +264,7 @@ public class Ciudadano {
 
     public List<Rubro> getRubros() { return rubros; }
     public void setRubros(List<Rubro> rubros) { this.rubros = rubros; }
+
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
 }
